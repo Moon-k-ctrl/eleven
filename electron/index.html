@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eleven</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 悬浮条 -->
+  <div class="floating-bar" id="floatingBar">
+    <div class="bar-icon">📋</div>
+    <div class="bar-status">
+      <span class="status-text" id="statusText">就绪</span>
+      <span class="status-count" id="statusCount">0 条</span>
+    </div>
+    <div class="bar-indicator" id="statusIndicator"></div>
+  </div>
+
+  <!-- 剪贴板列表下拉面板 -->
+  <div class="clipboard-panel" id="clipboardPanel">
+    <div class="panel-header">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索..." />
+      <button class="panel-btn" id="clearBtn" title="清空">🗑️</button>
+    </div>
+    <div class="clipboard-list" id="clipboardList">
+      <div class="empty-hint">暂无记录</div>
+    </div>
+  </div>
+
+  <div class="notification-container" id="notificationContainer"></div>
+
+  <!-- v3.0 拖拽收录覆盖层 -->
+  <div class="drop-zone-overlay" id="dropZoneOverlay">
+    <div class="drop-zone-content">
+      <div class="drop-zone-icon">📥</div>
+      <div class="drop-zone-text">释放文件以收录到拾遗</div>
+    </div>
+  </div>
+
+  <script src="renderer/drag-position.js"></script>
+  <script src="renderer/state-machine.js"></script>
+  <script src="renderer/renderer.js"></script>
+  <script src="renderer/notification.js"></script>
+</body>
+</html>

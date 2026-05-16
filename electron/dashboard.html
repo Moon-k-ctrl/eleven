@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eleven - 详情面板</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
+    }
+
+    .header h1 { font-size: 18px; font-weight: normal; }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .status-badge.online { background: #4CAF50; }
+    .status-badge.warning { background: #FF9800; }
+    .status-badge.error { background: #F44336; }
+    .status-badge.offline { background: #757575; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #2d2d2d;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-value { font-size: 24px; font-weight: bold; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: #888; }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-box {
+      flex: 1;
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 13px;
+      font-family: "Microsoft YaHei", sans-serif;
+      outline: none;
+    }
+
+    .search-box:focus { border-color: #4A90D9; }
+
+    .btn {
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    .btn:hover { background: #3d3d3d; }
+    .btn.danger:hover { background: #c0392b; }
+
+    .item-list {
+      flex: 1;
+      overflow-y: auto;
+      background: #2d2d2d;
+      border-radius: 8px;
+    }
+
+    .item-list::-webkit-scrollbar { width: 6px; }
+    .item-list::-webkit-scrollbar-track { background: transparent; }
+    .item-list::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .item:hover { background: #3a3a3a; }
+    .item:last-child { border-bottom: none; }
+    .item.pinned { border-left: 3px solid #4CAF50; }
+
+    .item-icon { font-size: 16px; flex-shrink: 0; }
+
+    .item-body { flex: 1; min-width: 0; }
+
+    .item-text {
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-time { font-size: 11px; color: #666; margin-top: 2px; }
+
+    .item-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+    .item:hover .item-actions { opacity: 1; }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: #aaa;
+    }
+
+    .action-btn:hover { background: #555; color: #fff; }
+
+    .empty { text-align: center; color: #666; padding: 40px; }
+
+    /* v3.0 项目空间 */
+    .project-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .project-tab {
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 16px;
+      padding: 4px 12px;
+      color: #aaa;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .project-tab:hover { background: #3d3d3d; color: #fff; }
+    .project-tab.active { background: #4A90D9; color: #fff; border-color: #4A90D9; }
+
+    .project-tab .del-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      cursor: pointer;
+      font-size: 10px;
+      padding: 0 2px;
+    }
+
+    .project-tab:hover .del-btn { display: inline; }
+    .project-tab.active .del-btn { display: inline; color: rgba(255,255,255,0.6); }
+    .project-tab.active .del-btn:hover { color: #ff4444; }
+
+    .add-project-btn {
+      background: none;
+      border: 1px dashed #555;
+      border-radius: 16px;
+      padding: 4px 10px;
+      color: #888;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .add-project-btn:hover { border-color: #4A90D9; color: #4A90D9; }
+
+    .item-source {
+      font-size: 10px;
+      color: #555;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📋 eleven</h1>
+    <span class="status-badge online" id="statusBadge">在线</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value" id="totalCount">0</div>
+      <div class="stat-label">总记录数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="maxItems">200</div>
+      <div class="stat-label">容量上限</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="storageMode">临时</div>
+      <div class="stat-label">存储模式</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" class="search-box" id="searchInput" placeholder="搜索剪贴板内容..." />
+    <button class="btn" id="refreshBtn">刷新</button>
+    <button class="btn danger" id="clearBtn">清空全部</button>
+  </div>
+
+  <!-- v3.0 项目空间标签栏 -->
+  <div class="project-bar" id="projectBar">
+    <div class="project-tab active" data-project="all">全部</div>
+  </div>
+
+  <div class="item-list" id="itemList">
+    <div class="empty">加载中...</div>
+  </div>
+
+  <script>
+    let searchTimer = null;
+
+    // 加载数据
+    async function loadItems(query) {
+      let result;
+      if (query) {
+        result = await window.electronAPI.searchItems(query);
+      } else {
+        result = await window.electronAPI.getItems(100);
+      }
+      renderItems(result.items || []);
+    }
+
+    function renderItems(items) {
+      const list = document.getElementById('itemList');
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty">暂无记录</div>';
+        return;
+      }
+
+      list.innerHTML = items.map(item => {
+        const icon = { TEXT: '📝', IMAGE: '🖼️', FILES: '📁', HTML: '🌐' }[item.content_type] || '📝';
+        const preview = getPreview(item);
+        const time = formatTime(item.created_at);
+        const pinned = item.is_pinned ? 'pinned' : '';
+        const sourceLabels = { clipboard: '📋', 'context-menu': '📎', 'drag-drop': '📥', hotkey: '⌨️', 'browser-plugin': '🌐', api: '🔗' };
+        const sourceLabel = sourceLabels[item.source] || '';
+
+        return `
+          <div class="item ${pinned}" data-id="${item.id}">
+            <div class="item-icon">${icon}</div>
+            <div class="item-body">
+              <div class="item-text">${escapeHtml(preview)}${sourceLabel ? '<span class="item-source">' + sourceLabel + '</span>' : ''}</div>
+              <div class="item-time">${time}</div>
+            </div>
+            <div class="item-actions">
+              <button class="action-btn btn-copy" title="复制">📋</button>
+              <button class="action-btn btn-pin" title="${item.is_pinned ? '取消置顶' : '置顶'}">📌</button>
+              <button class="action-btn btn-del" title="删除">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 绑定事件
+      list.querySelectorAll('.item').forEach(el => {
+        const id = parseInt(el.dataset.id);
+
+        el.querySelector('.btn-copy').addEventListener('click', async () => {
+          await window.electronAPI.copyItem(id);
+        });
+
+        el.querySelector('.btn-pin').addEventListener('click', async () => {
+          await window.electronAPI.pinItem(id);
+          loadItems();
+        });
+
+        el.querySelector('.btn-del').addEventListener('click', async () => {
+          await window.electronAPI.deleteItem(id);
+          loadItems();
+        });
+
+        el.addEventListener('dblclick', async () => {
+          await window.electronAPI.copyItem(id);
+        });
+      });
+    }
+
+    function getPreview(item) {
+      if (item.content_type === 'TEXT' || item.content_type === 'HTML') {
+        return (item.content_text || '').substring(0, 100).replace(/\n/g, ' ');
+      }
+      if (item.content_type === 'IMAGE') return '[图片]';
+      if (item.content_type === 'FILES') {
+        const fp = item.content_text || '';
+        const ext = fp.split('.').pop().toLowerCase();
+        const archiveExts = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'];
+        if (archiveExts.includes(ext)) return `[压缩] ${fp}`;
+        return `[文件] ${fp}`;
+      }
+      return '';
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+      return d.toLocaleDateString('zh-CN');
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // 监听数据更新
+    window.electronAPI.onDataUpdate((data) => {
+      if (data.count !== undefined) {
+        document.getElementById('totalCount').textContent = data.count;
+      }
+      if (data.status) {
+        const badge = document.getElementById('statusBadge');
+        badge.className = `status-badge ${data.status}`;
+        badge.textContent = { online: '在线', warning: '警告', error: '错误', offline: '离线' }[data.status] || data.status;
+      }
+      if (data.max_items) {
+        document.getElementById('maxItems').textContent = data.max_items;
+      }
+      if (data.storage_mode) {
+        document.getElementById('storageMode').textContent = data.storage_mode === 'volatile' ? '临时' : '持久';
+      }
+      loadItems();
+    });
+
+    // 搜索
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        loadItems(document.getElementById('searchInput').value.trim());
+      }, 300);
+    });
+
+    // 刷新
+    document.getElementById('refreshBtn').addEventListener('click', () => loadItems());
+
+    // 清空
+    document.getElementById('clearBtn').addEventListener('click', async () => {
+      if (confirm('确定清空所有剪贴板记录？')) {
+        await window.electronAPI.clearItems();
+        loadItems();
+      }
+    });
+
+    // ── v3.0 项目空间 ──
+
+    let currentProject = 'all';
+
+    async function loadProjects() {
+      try {
+        const result = await window.electronAPI.getProjects();
+        const projects = result.projects || [];
+        renderProjectTabs(projects);
+      } catch {}
+    }
+
+    function renderProjectTabs(projects) {
+      const bar = document.getElementById('projectBar');
+      bar.innerHTML = '<div class="project-tab ' + (currentProject === 'all' ? 'active' : '') + '" data-project="all">全部</div>';
+
+      for (const p of projects) {
+        const active = currentProject === p.name ? 'active' : '';
+        bar.innerHTML += `
+          <div class="project-tab ${active}" data-project="${escapeHtml(p.name)}">
+            ${p.icon || '📁'} ${escapeHtml(p.name)}
+            ${p.name !== 'default' ? '<button class="del-btn" data-id="' + p.id + '" title="删除">✕</button>' : ''}
+          </div>
+        `;
+      }
+
+      bar.innerHTML += '<button class="add-project-btn" id="addProjectBtn">+ 项目</button>';
+
+      // 绑定事件
+      bar.querySelectorAll('.project-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          if (e.target.classList.contains('del-btn')) return;
+          currentProject = tab.dataset.project;
+          loadProjects();
+          loadItems();
+        });
+      });
+
+      bar.querySelectorAll('.del-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.id);
+          if (confirm('删除此项目？项目中的文件不会被删除。')) {
+            await window.electronAPI.deleteProject(id);
+            if (currentProject !== 'all') currentProject = 'all';
+            loadProjects();
+            loadItems();
+          }
+        });
+      });
+
+      const addBtn = document.getElementById('addProjectBtn');
+      if (addBtn) {
+        addBtn.addEventListener('click', async () => {
+          const name = prompt('输入项目名称：');
+          if (name && name.trim()) {
+            await window.electronAPI.createProject(name.trim());
+            loadProjects();
+          }
+        });
+      }
+    }
+
+    // Override loadItems to support project filter
+    const _originalLoadItems = loadItems;
+    loadItems = async function(query) {
+      let result;
+      if (query) {
+        result = await window.electronAPI.searchItems(query);
+      } else if (currentProject !== 'all') {
+        // Use getItems with project filter via fetch
+        try {
+          const res = await fetch(`http://127.0.0.1:8199/api/items?limit=100&project=${encodeURIComponent(currentProject)}`);
+          result = await res.json();
+        } catch {
+          result = { items: [] };
+        }
+      } else {
+        result = await window.electronAPI.getItems(100);
+      }
+      renderItems(result.items || []);
+    };
+
+    // 初始加载
+    loadProjects();
+    loadItems();
+  </script>
+</body>
+</html>

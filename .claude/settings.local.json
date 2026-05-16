@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/knigh/projects/clipboard-station/electron/**)",
+      "Bash(npm install *)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
