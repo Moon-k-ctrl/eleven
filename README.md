@@ -1,105 +1,235 @@
-拾遗-产品说明-PyQt6版.md
-拾遗 — 剪贴板管理工具（PyQt6 版）
-版本：3.0+ | 平台：Windows 10/11 | 技术栈：Python 3.11 + PyQt6 + Win32 API + SQLite
+# 拾遗 (ShiYi) - Windows 桌面中转站
 
-产品简介
-拾遗是一款 Windows 桌面剪贴板管理工具，基于原生 Win32 剪贴板监听机制（WM_CLIPBOARDUPDATE），实现零延迟的剪贴板内容捕获。支持文本、HTML 富文本、图片、文件等多种内容类型的统一管理，配合全局快捷键一键唤出面板，快速检索和复用历史剪贴内容。
+<div align="center">
 
-采用 PyQt6 原生 UI 框架，支持 Windows 11 Mica / Windows 10 Acrylic 亚克力毛玻璃特效，提供流畅的系统级视觉体验。
+**Windows 桌面效率工具 - 剪贴板管理器 + 文件中转站**
 
-运行模式
-拾遗支持两种运行模式，适配不同使用场景：
+[![GitHub release](https://img.shields.io/badge/release-v3.1.0-blue)](https://github.com/Moon-k-ctrl/eleven)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)](https://www.python.org/)
+[![Electron](https://img.shields.io/badge/Electron-28.0-red?logo=electron)](https://www.electronjs.org/)
 
-模式	启动方式	架构	适用场景
-独立模式	python -m src.main	PyQt6 直连数据库	单机使用，轻量快速
-服务模式	python -m src.server	FastAPI 后端 + Electron 前端	需要 Web UI 或远程访问
-核心功能
-剪贴板自动捕获
-Win32 原生监听：通过 AddClipboardFormatListener 注册系统级剪贴板通知，无需轮询，零 CPU 开销
-四种内容类型：纯文本（CF_UNICODETEXT）、HTML 富文本（HTML Format）、图片（CF_DIB）、文件列表（CF_HDROP）
-智能去重：SHA-256 内容哈希，相同内容不会重复入库
-自动分类：根据文件扩展名自动归类为 Word、Excel、PDF、PPT、压缩包等
-来源追踪：记录每条内容的来源渠道（剪贴板、右键菜单、拖拽、快捷键、浏览器插件、API）
-图片处理管线
-DIB 位图自动转换为 PNG 格式存储
-80x80 JPEG 缩略图自动生成
-图片尺寸自动缩放（默认最大 800x800）
-JPEG 压缩质量可配置（默认 85%）
-容量管理
-默认最大 200 条，超出自动清理最旧的非置顶条目
-置顶条目不受清理影响
-存储模式切换：临时模式（内存数据库，关闭即清除）/ 持久模式（磁盘文件，重启保留）
-主面板
-窗口特性
-始终置顶、无边框、透明背景
-DPI 自适应缩放
-淡入/淡出动画（160ms/120ms 三次贝塞尔缓动）
-Windows 11 Mica / Windows 10 Acrylic 亚克力毛玻璃特效
-顶栏
-元素	功能
-状态指示灯	在线（绿）/ 警告（橙）/ 错误（红）/ 离线（灰）
-容量计数	当前条数 / 最大条数（如 45/200）
-多选按钮	进入/退出多选模式
-导出按钮	打开导出对话框
-清空按钮	清除所有条目
-合并按钮	合并选中文本条目
-筛选与搜索
-分类筛选栏：全部 / 文本 / 图片 / Word / Excel / PDF / PPT / 压缩包，彩色按钮切换
-标签筛选栏：可点击标签芯片，支持多标签组合筛选（AND 逻辑），"+" 按钮打开标签管理器
-项目下拉筛选：按项目空间过滤
-来源/分组下拉筛选：按内容来源或自定义分组过滤
-搜索框：300ms 防抖实时搜索，FTS5 全文索引，支持清空按钮
-列表项
-每条剪贴记录显示：
+</div>
 
-类型图标（48x48）：图片缩略图（圆角裁剪）/ 文件类型图标（彩色角标）/ Emoji 回退
-内容预览：文本摘要或文件名
-时间戳：相对时间显示（刚刚 / X分钟前 / HH:MM / MM-DD HH:MM）
-来源图标：剪贴板 / 右键菜单 / 拖拽 / 快捷键 / 浏览器插件 / API
-标签芯片：彩色圆角药片，最多显示 3 个
-状态图标：置顶 / 收藏 / 星标
-多选模式：复选框覆盖层 + 金色选中高亮
-交互操作
-操作	效果
-单击	复制到系统剪贴板
-双击	打开预览窗口
-右键	上下文菜单
-拖出	拖拽到外部应用（支持文本/HTML/文件/图片）
-拖入	导入文件到剪贴板历史
-右键菜单
-复制 / 预览
-收藏 / 取消收藏
-星标 / 取消星标
-置顶 / 取消置顶
-删除
-添加标签（子菜单：显示未关联标签）
-移除标签（子菜单：显示已关联标签）
-进入多选模式
-快捷键
-快捷键	功能
-Ctrl+Shift+V	显示/隐藏主面板
-Ctrl+Shift+C	截取选区（模拟 Ctrl+C → 读取剪贴板 → 导入 → 恢复原内容）
-Ctrl+V	粘贴/截取当前选区
-Ctrl+F	聚焦搜索框
-Ctrl+A	多选模式下全选
-Ctrl+E	导出
-Ctrl+M	合并选中条目
-Enter	复制当前条目
-Shift+Enter	预览当前条目
-Delete	删除当前条目
-Up / Down	列表导航
-Escape	清空搜索 / 退出多选 / 关闭面板
-预览窗口
-独立的全功能预览窗口，支持 7 种文件类型的专业渲染：
+---
 
-类型	渲染引擎	特性
-文本	QTextEdit	自动换行、HTML 渲染、字号调节（A-/A+，8-72px）
-图片	QGraphicsView	缩放（0.1x-10x）、适应窗口、重置缩放、拖拽平移、Ctrl+滚轮缩放
-PDF	PyMuPDF (fitz)	翻页、缩放（0.5x-5.0x）、Ctrl+滚轮缩放、资源自动释放
-Word	python-docx → HTML	标题（H1-H3）、列表、表格、粗体/斜体/下划线、暗色主题
-Excel	openpyxl → HTML 表格	最大 500 行截断提示、工作表名显示、暗色主题
-PPT	PowerPoint COM + python-pptx	幻灯片导出为 1920x1080 PNG、翻页导航、临时目录清理
-Markdown	markdown + Pygments	表格、围栏代码块、语法高亮、TOC、暗色主题
-预览窗口工具栏
-关闭 / 标题 / 缩放控制（+/-/适应）/ 翻页（上/下）/ 复制 / 打开 / 全屏
-上下文感知：缩放仅图片/PDF 可见，翻页仅 PDF/PPT 可见
+## 📦 项目简介
+
+**拾遗** 是一款 Windows 桌面效率工具，定位为 **剪贴板管理器 + 文件中转站**。
+
+核心功能：
+- 📋 **剪贴板历史**：自动记录剪贴板内容，随时回溯
+- 📁 **文件中转**：拖拽文件到悬浮球，快速预览和分类
+- 🏷️ **标签管理**：为剪贴项和文件添加标签，方便检索
+- 🔍 **快速搜索**：支持全文搜索，快速定位历史内容
+- 🎨 **水墨风 UI**：东方美学设计，墨分五色配色体系
+
+---
+
+## ✨ 功能特性
+
+### 核心功能
+| 功能 | 说明 |
+|------|------|
+| 📋 剪贴板监听 | 自动捕获文本、图片、文件路径 |
+| 📁 文件中转站 | 拖拽文件到悬浮球，暂存并分类 |
+| 🏷️ 标签系统 | 为每条记录添加多标签，支持筛选 |
+| 🔍 全文搜索 | 快速搜索历史剪贴内容 |
+| 📌 固定重要项 | 固定常用剪贴，不被自动清理 |
+| 📤 导出功能 | 导出为 TXT / CSV / JSON / Markdown |
+
+### 预览支持
+- 📄 **文本**：纯文本预览
+- 🖼️ **图片**：JPG/PNG/GIF/WEBP 预览
+- 📝 **Word**：DOCX 文档预览
+- 📊 **Excel**：XLSX 表格预览
+- 📋 **PDF**：PDF 文档预览
+- 📽️ **PPT**：PPTX 演示文稿预览
+
+---
+
+## 🎨 UI 设计
+
+**水墨风设计语言**：
+- 配色：墨分五色（焦、浓、重、淡、清）
+- 布局：标题栏 + 筛选区 + 标签行 + 列表面板
+- 动画：悬浮球扩散/收拢，流畅自然
+
+> UI 设计详情请查看 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+---
+
+## 🛠️ 技术栈
+
+### 后端
+- **Python 3.11+**
+- **PyQt6**：UI 框架
+- **SQLite**：本地数据库
+- **Pillow**：图片处理
+- **python-docx / openpyxl / PyPDF2 / python-pptx**：文件预览
+
+### 前端
+- **Electron 28**：桌面容器
+- **HTML5 + CSS3 + JavaScript**：UI 渲染
+- **Node.js 20+**
+
+---
+
+## 📥 安装
+
+### 方式一：下载发布版（推荐）
+1. 前往 [Releases](https://github.com/Moon-k-ctrl/eleven/releases) 页面
+2. 下载最新版 `eleven-setup-v3.1.0.exe`
+3. 双击安装，按向导完成
+
+### 方式二：从源码构建
+```bash
+# 克隆仓库
+git clone https://github.com/Moon-k-ctrl/eleven.git
+cd eleven
+
+# 安装 Python 依赖
+pip install -r requirements.txt
+
+# 安装 Node.js 依赖
+cd electron
+npm install
+cd .
+
+# 运行（开发模式）
+python src/main.py
+
+# 打包（PyInstaller）
+pyinstaller eleven.spec --noconfirm
+```
+
+---
+
+## 🚀 使用方法
+
+### 基本操作
+1. **启动**：运行 `eleven.exe` 或从源码运行 `python src/main.py`
+2. **剪贴板监听**：自动在后台运行，记录剪贴内容
+3. **打开面板**：点击系统托盘图标 或 按快捷键 `Win+Shift+V`
+4. **文件中转**：拖拽文件到悬浮球，自动添加到中转站
+5. **搜索**：在搜索框输入关键词，实时过滤
+6. **标签筛选**：点击标签 chip，快速筛选
+
+### 快捷键
+| 快捷键 | 功能 |
+|--------|------|
+| `Win+Shift+V` | 打开/隐藏 列表面板 |
+| `Esc` | 隐藏面板 |
+| `Ctrl+F` | 聚焦搜索框 |
+| `Delete` | 删除选中项 |
+
+---
+
+## 📂 项目结构
+
+```
+eleven/
+├── src/                  # Python 后端源码
+│   ├── core/            # 核心功能（剪贴板监听、管理器、配置、数据库）
+│   ├── models/          # 数据模型
+│   ├── ui/              # PyQt6 UI（悬浮球、面板、预览）
+│   │   └── previews/   # 文件预览器（图片、Word、Excel、PDF、PPT）
+│   ├── utils/           # 工具函数（自启动、导入导出）
+│   ├── main.py          # 后端入口
+│   ├── app.py           # PyQt6 应用
+│   └── server.py       # 本地 HTTP 服务器
+├── electron/            # Electron 前端
+│   ├── main/           # 主进程（窗口管理、托盘、快捷键、网关监控）
+│   ├── renderer/        # 渲染进程（拖拽、通知、状态机）
+│   ├── index.html       # 主界面
+│   ├── dashboard.html   # 列表面板
+│   ├── floating-ball.html  # 悬浮球
+│   ├── preload.js       # 预加载脚本
+│   ├── styles.css       # 全局样式
+│   └── package.json     # npm 配置
+├── docs/                # 文档
+│   ├── ARCHITECTURE.md  # 架构说明
+│   └── PRD.md          # 产品需求文档
+├── scripts/              # 辅助脚本
+├── tests/               # 单元测试
+├── requirements.txt      # Python 依赖
+├── eleven.spec          # PyInstaller 配置（后端）
+├── eleven-backend.spec   # PyInstaller 配置（后端独立）
+├── eleven-desktop.spec  # PyInstaller 配置（Electron）
+└── README.md            # 本文件
+```
+
+---
+
+## 🔧 开发
+
+### 运行开发模式
+```bash
+# 终端 1：运行后端
+python src/main.py
+
+# 终端 2：运行前端（Electron）
+cd electron
+npm start
+```
+
+### 构建发布版
+```bash
+# 构建后端（PyInstaller）
+pyinstaller eleven.spec --noconfirm
+
+# 构建前端（Electron）
+cd electron
+npm run build
+```
+
+---
+
+## 📝 更新日志
+
+### v3.1.0 (2026-05-17)
+- ✅ 初始版本发布
+- ✅ 剪贴板监听和管理
+- ✅ 文件中转站（拖拽上传）
+- ✅ 标签系统
+- ✅ 全文搜索
+- ✅ 多格式文件预览（文本/图片/Word/Excel/PDF/PPT）
+- ✅ 水墨风 UI 设计
+- ✅ 悬浮球 + 列表面板
+- ✅ 系统托盘集成
+- ✅ 快捷键支持
+- ✅ 导出功能（TXT/CSV/JSON/Markdown）
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 🙏 致谢
+
+- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
+- [Electron](https://www.electronjs.org/)
+- [Python](https://www.python.org/)
+- [Pillow](https://python-pillow.org/)
+- [python-docx](https://python-docx.readthedocs.io/)
+- [openpyxl](https://openpyxl.readthedocs.io/)
+- [PyPDF2](https://pypdf2.readthedocs.io/)
+- [python-pptx](https://python-pptx.readthedocs.io/)
+
+---
+
+## 📧 联系
+
+- GitHub Issues：[https://github.com/Moon-k-ctrl/eleven/issues](https://github.com/Moon-k-ctrl/eleven/issues)
+- Email：545591243zx@gmail.com
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对你有帮助，请给个 Star！⭐**
+
+</div>
