@@ -12,28 +12,34 @@ Button {
     rightPadding: 12
     spacing: 6
 
-    contentItem: Row {
-        spacing: 6
-        anchors.centerIn: parent
-        Text {
-            text: control.iconText
-            color: label.color
-            font.pixelSize: 13
-            font.family: Theme.fontFamilyEmoji
-            visible: control.iconText !== ""
-        }
-        Text {
-            id: label
-            text: control.text
-            color: control.primary
-                ? Theme.textInverse
-                : control.danger
-                    ? (control.hovered ? Theme.error : Theme.textSecondary)
-                    : (control.hovered ? Theme.textPrimary : Theme.textSecondary)
-            font.pixelSize: Theme.fontSizeSM
-            font.weight: control.primary ? Theme.fontBold : Theme.fontMedium
-            font.family: Theme.fontFamilyPrimary
-            wrapMode: Text.NoWrap
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
+
+        Row {
+            id: contentRow
+            spacing: 6
+            anchors.centerIn: parent
+            Text {
+                text: control.iconText
+                color: label.color
+                font.pixelSize: 13
+                font.family: Theme.fontFamilyEmoji
+                visible: control.iconText !== ""
+            }
+            Text {
+                id: label
+                text: control.text
+                color: control.primary
+                    ? Theme.textInverse
+                    : control.danger
+                        ? (control.hovered ? Theme.error : Theme.textSecondary)
+                        : (control.hovered ? Theme.textPrimary : Theme.textSecondary)
+                font.pixelSize: Theme.fontSizeSM
+                font.weight: control.primary ? Theme.fontBold : Theme.fontMedium
+                font.family: Theme.fontFamilyPrimary
+                wrapMode: Text.NoWrap
+            }
         }
     }
 

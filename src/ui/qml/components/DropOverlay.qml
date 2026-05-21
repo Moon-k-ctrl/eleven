@@ -15,15 +15,42 @@ DropArea {
             var paths = []
             for (var i = 0; i < drop.urls.length; i++) {
                 var url = drop.urls[i]
-                // Convert file:/// URL to local path, decode %20 etc.
-                if (url.startsWith("file:///")) {
-                    paths.push(decodeURIComponent(url.substring(8)))
-                } else {
-                    paths.push(decodeURIComponent(url))
+                var path = ""
+                
+                // QML URL to local path conversion
+                var urlStr = ""
+                if (url !== null && url !== undefined) {
+                    if (typeof url.toLocalFile === "function") {
+                        path = url.toLocalFile()
+                    }
+                    if (!path) {
+                        urlStr = url.toString()
+                    }
+                }
+                
+                if (!path && urlStr) {
+                    // Remove file:/// or file:// prefix
+                    if (urlStr.indexOf("file:///") === 0) {
+                        path = decodeURIComponent(urlStr.substring(8))
+                    } else if (urlStr.indexOf("file://") === 0) {
+                        path = decodeURIComponent(urlStr.substring(7))
+                    } else {
+                        path = decodeURIComponent(urlStr)
+                    }
+                    
+                    // Windows path normalization: /C:/Users/... -> C:/Users/...
+                    if (path.charAt(0) === '/' && path.charAt(2) === ':') {
+                        path = path.substring(1)
+                    }
+                }
+                
+                if (path) {
+                    paths.push(path)
                 }
             }
             if (paths.length > 0) {
                 bridge.importFiles(paths)
+                bridge.refreshList()
             }
         }
     }

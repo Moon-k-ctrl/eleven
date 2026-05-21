@@ -137,7 +137,8 @@ Rectangle {
             anchors.fill: parent
             anchors.leftMargin: Theme.spacingMD
             anchors.rightMargin: Theme.spacingMD
-            anchors.topMargin: 10
+            anchors.topMargin: 5
+            anchors.bottomMargin: 5
             spacing: 8
 
             // Merge button (visible when multi-select)
@@ -151,12 +152,6 @@ Rectangle {
                     var ids = bridge.getSelectedItemIds()
                     if (ids.length > 1) bridge.mergeItems(ids)
                 }
-            }
-            Item {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 58
-                Layout.preferredHeight: 1
-                visible: !bridge.multiSelectMode
             }
 
             ShiyiButton {
