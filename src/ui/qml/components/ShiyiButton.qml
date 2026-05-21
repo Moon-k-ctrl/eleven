@@ -48,13 +48,9 @@ Button {
     }
 
     background: Rectangle {
+        id: bgRect
         radius: Theme.radiusSM
-        gradient: control.primary
-            ? Gradient {
-                GradientStop { position: 0.0; color: Theme.accentMint }
-                GradientStop { position: 1.0; color: "#69C9DC" }
-              }
-            : null
+        gradient: control.primary ? primaryGradient : null
         color: control.primary
             ? "transparent"
             : control.hovered
@@ -69,5 +65,11 @@ Button {
 
         Behavior on color { ColorAnimation { duration: Theme.animFast } }
         Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+        Gradient {
+            id: primaryGradient
+            GradientStop { position: 0.0; color: Theme.accentMint }
+            GradientStop { position: 1.0; color: "#69C9DC" }
+        }
     }
 }
