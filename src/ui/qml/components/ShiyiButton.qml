@@ -7,6 +7,10 @@ Button {
     property bool danger: false
     property string iconText: ""
 
+    property real hoverYOffset: (control.hovered && !control.pressed) ? -1.5 : 0
+    Behavior on hoverYOffset { NumberAnimation { duration: Theme.animFast } }
+    transform: Translate { y: control.hoverYOffset }
+
     implicitHeight: 32
     leftPadding: 12
     rightPadding: 12
@@ -45,8 +49,14 @@ Button {
 
     background: Rectangle {
         radius: Theme.radiusSM
+        gradient: control.primary
+            ? Gradient {
+                GradientStop { position: 0.0; color: Theme.accentMint }
+                GradientStop { position: 1.0; color: "#69C9DC" }
+              }
+            : null
         color: control.primary
-            ? Theme.accentMint
+            ? "transparent"
             : control.hovered
                 ? (control.danger ? Qt.rgba(0.94, 0.39, 0.39, 0.10) : Qt.rgba(0.49, 0.88, 0.76, 0.10))
                 : Qt.rgba(1, 1, 1, 0.045)

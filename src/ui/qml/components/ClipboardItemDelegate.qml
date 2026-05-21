@@ -6,8 +6,12 @@ Rectangle {
     id: delegate
     width: ListView.view ? ListView.view.width : 430
     height: Theme.itemHeight
-    color: mouseArea.containsMouse ? Qt.rgba(0.49, 0.88, 0.76, 0.075) : (isSelected ? Qt.rgba(0.49, 0.88, 0.76, 0.075) : "transparent")
-    border.color: mouseArea.containsMouse ? Qt.rgba(0.49, 0.88, 0.76, 0.18) : (isSelected ? Qt.rgba(0.49, 0.88, 0.76, 0.18) : "transparent")
+
+    // Convert hex string to color object safely
+    property color accentMintColor: Theme.accentMint
+
+    color: (mouseArea.containsMouse || isSelected) ? Qt.rgba(accentMintColor.r, accentMintColor.g, accentMintColor.b, 0.075) : "transparent"
+    border.color: (mouseArea.containsMouse || isSelected) ? Qt.rgba(accentMintColor.r, accentMintColor.g, accentMintColor.b, 0.18) : "transparent"
     border.width: 1
 
     // Model roles
@@ -93,12 +97,18 @@ Rectangle {
         }
 
         // Type icon / Thumbnail
-        Rectangle {
+        Item {
             width: Theme.thumbnailSize
             height: Theme.thumbnailSize
-            radius: Theme.radiusSM
-            color: Qt.rgba(typeColor().r, typeColor().g, typeColor().b, 0.18)
             Layout.alignment: Qt.AlignVCenter
+
+            // Sibling background with opacity to safely render dynamic typeColor
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radiusSM
+                color: typeColor()
+                opacity: 0.14
+            }
 
             // Show thumbnail for images
             Image {

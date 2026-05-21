@@ -13,15 +13,17 @@ from typing import Optional
 from PyQt6.QtCore import (
     QEasingCurve, QMimeData, QPoint, QPointF, QRectF,
     QPropertyAnimation, Qt, QTimer, QUrl, pyqtSignal,
+    pyqtProperty, QParallelAnimationGroup,
 )
 from PyQt6.QtGui import (
     QBrush, QColor, QDrag, QLinearGradient,
-    QPainter, QPainterPath, QPen, QPixmap,
+    QPainter, QPainterPath, QPen, QPixmap, QRadialGradient,
 )
 from PyQt6.QtWidgets import QApplication, QMenu, QWidget
 
 from src.models.clipboard_item import ClipboardItem, ContentType
 from src.ui.drag_handler import DragHandler
+from src.ui.qml.theme_singleton import ThemeSingleton
 
 logger = logging.getLogger("eleven.preview_bar")
 
@@ -80,11 +82,14 @@ class PreviewBar(QWidget):
         self._mode = "ball"  # "ball" | "preview"
         self._count = 0  # badge count (total items in DB)
         self._status = "offline"  # "online" | "warning" | "error" | "offline"
+        self._theme = ThemeSingleton()
+        self._morph_progress = 0.0
 
         # Interaction state
         self._hovered = False
         self._drag_over = False
         self._hovered_index = -1
+        self._hovered_btn = ""  # "expand" | "close" | ""
         self._dragging_index = -1
         self._drag_start_pos: Optional[QPoint] = None
         self._drag_start_index = -1
@@ -162,6 +167,15 @@ class PreviewBar(QWidget):
             x = geo.right() - BALL_WINDOW_W - 20
             y = geo.bottom() - BALL_WINDOW_H - 20
         self.setGeometry(x, y, BALL_WINDOW_W, BALL_WINDOW_H)
+
+    @pyqtProperty(float)
+    def morph_progress(self) -> float:
+        return self._morph_progress
+
+    @morph_progress.setter
+    def morph_progress(self, val: float):
+        self._morph_progress = val
+        self.update()
 
     @staticmethod
     def _load_position() -> tuple[int, int] | None:
@@ -265,17 +279,30 @@ class PreviewBar(QWidget):
         target_x = geo.right() - target_w - 8
         target_y = self.y()
 
-        anim = QPropertyAnimation(self, b"geometry")
-        anim.setDuration(350)
-        anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-        anim.setStartValue(self.geometry())
-        anim.setEndValue(self._make_rect(target_x, target_y, target_w, target_h))
-        anim.finished.connect(self._on_preview_morph_finished)
-        anim.start()
-        self._morph_anim = anim  # prevent GC
+        self._morph_progress = 0.0
+
+        geom_anim = QPropertyAnimation(self, b"geometry")
+        geom_anim.setDuration(350)
+        geom_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        geom_anim.setStartValue(self.geometry())
+        geom_anim.setEndValue(self._make_rect(target_x, target_y, target_w, target_h))
+
+        progress_anim = QPropertyAnimation(self, b"morph_progress")
+        progress_anim.setDuration(350)
+        progress_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        progress_anim.setStartValue(0.0)
+        progress_anim.setEndValue(1.0)
+
+        group = QParallelAnimationGroup(self)
+        group.addAnimation(geom_anim)
+        group.addAnimation(progress_anim)
+        group.finished.connect(self._on_preview_morph_finished)
+        group.start()
+        self._morph_anim = group  # prevent GC
 
     def _on_preview_morph_finished(self):
         self._mode = "preview"
+        self._morph_progress = 1.0
         self._is_animating = False
         self._long_hover_timer.stop()
         self.update()
@@ -297,17 +324,30 @@ class PreviewBar(QWidget):
             target_x = geo.right() - BALL_WINDOW_W - 20
             target_y = geo.bottom() - BALL_WINDOW_H - 20
 
-        anim = QPropertyAnimation(self, b"geometry")
-        anim.setDuration(300)
-        anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        anim.setStartValue(self.geometry())
-        anim.setEndValue(self._make_rect(target_x, target_y, BALL_WINDOW_W, BALL_WINDOW_H))
-        anim.finished.connect(self._on_ball_morph_finished)
-        anim.start()
-        self._morph_anim = anim
+        self._morph_progress = 1.0
+
+        geom_anim = QPropertyAnimation(self, b"geometry")
+        geom_anim.setDuration(300)
+        geom_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        geom_anim.setStartValue(self.geometry())
+        geom_anim.setEndValue(self._make_rect(target_x, target_y, BALL_WINDOW_W, BALL_WINDOW_H))
+
+        progress_anim = QPropertyAnimation(self, b"morph_progress")
+        progress_anim.setDuration(300)
+        progress_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        progress_anim.setStartValue(1.0)
+        progress_anim.setEndValue(0.0)
+
+        group = QParallelAnimationGroup(self)
+        group.addAnimation(geom_anim)
+        group.addAnimation(progress_anim)
+        group.finished.connect(self._on_ball_morph_finished)
+        group.start()
+        self._morph_anim = group
 
     def _on_ball_morph_finished(self):
         self._mode = "ball"
+        self._morph_progress = 0.0
         self._is_animating = False
         self.all_cleared.emit()
         self.update()
@@ -322,7 +362,29 @@ class PreviewBar(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        if self._mode == "ball":
+        if self._is_animating:
+            t = self._morph_progress
+            if t < 0.5:
+                p.save()
+                p.setOpacity(1.0 - t)
+                self._paint_ball(p)
+                p.restore()
+                
+                p.save()
+                p.setOpacity(t)
+                self._paint_preview_bar(p)
+                p.restore()
+            else:
+                p.save()
+                p.setOpacity(t)
+                self._paint_preview_bar(p)
+                p.restore()
+                
+                p.save()
+                p.setOpacity(1.0 - t)
+                self._paint_ball(p)
+                p.restore()
+        elif self._mode == "ball":
             self._paint_ball(p)
         else:
             self._paint_preview_bar(p)
@@ -331,12 +393,25 @@ class PreviewBar(QWidget):
     def _paint_ball(self, p: QPainter):
         from PyQt6.QtGui import QFont
         import math
-        # 球体上移 4px，底部预留更多阴影空间
-        bx = BALL_MARGIN_SIDE
+        
+        # Calculate dynamic bx
+        w = self.width()
+        if self._is_animating:
+            bx = w - BALL_VISIBLE - BALL_MARGIN_SIDE
+        else:
+            bx = BALL_MARGIN_SIDE
+            
         by = BALL_MARGIN_TOP - 4
         cx = bx + BALL_VISIBLE / 2
         cy = by + BALL_VISIBLE / 2
         r = BALL_VISIBLE / 2
+
+        # Draw scaled-down and shadowed under pressed state
+        p.save()
+        if self._pressed:
+            p.translate(cx, cy)
+            p.scale(0.96, 0.96)
+            p.translate(-cx, -cy)
 
         # Shadow — mint-green tinted, matching design spec rgba(84,212,158,0.28)
         for i in range(5, 0, -1):
@@ -385,16 +460,34 @@ class PreviewBar(QWidget):
         p.setBrush(QBrush(grad))
         p.drawEllipse(bx, by, BALL_VISIBLE, BALL_VISIBLE)
 
+        # Specular/mirror highlight (glass/jade look) on top-left of the ball
+        high_g = QRadialGradient(cx - r/3, cy - r/3, r * 0.8)
+        high_g.setColorAt(0.0, QColor(255, 255, 255, 110))
+        high_g.setColorAt(0.4, QColor(255, 255, 255, 30))
+        high_g.setColorAt(1.0, QColor(255, 255, 255, 0))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QBrush(high_g))
+        p.drawEllipse(int(cx - r * 0.95), int(cy - r * 0.95), int(r * 1.5), int(r * 1.5))
+
         p.setPen(QColor(255, 255, 255))
         p.setFont(QFont("Segoe UI Emoji", 32))
         p.drawText(bx, by, BALL_VISIBLE, BALL_VISIBLE, Qt.AlignmentFlag.AlignCenter, "📦")
 
         # Badge
         if self._count > 0:
-            self._paint_badge(p, self._count)
+            self._paint_badge(p, self._count, bx)
 
         # Status indicator dot (bottom-left of ball)
-        status_color = STATUS_COLORS.get(self._status, STATUS_COLORS["offline"])
+        # Status color
+        if self._status == "online":
+            status_color = QColor(self._theme.statusOnline)
+        elif self._status == "warning":
+            status_color = QColor(self._theme.statusWarning)
+        elif self._status == "error":
+            status_color = QColor(self._theme.statusError)
+        else:
+            status_color = QColor(self._theme.statusOffline)
+
         # Breathing animation for "warning" status
         if self._status == "warning":
             breath_alpha = int(100 + 155 * (0.5 + 0.5 * math.sin(self._breath_phase * math.pi * 2)))
@@ -406,20 +499,22 @@ class PreviewBar(QWidget):
         p.setBrush(QBrush(status_color))
         p.drawEllipse(int(dot_x), int(dot_y), dot_size, dot_size)
 
-    def _paint_badge(self, p: QPainter, count: int):
+        p.restore()
+
+    def _paint_badge(self, p: QPainter, count: int, ball_x: float):
         from PyQt6.QtGui import QFont
         badge_text = str(count) if count <= 99 else "99+"
         fm = p.fontMetrics()
         text_w = fm.horizontalAdvance(badge_text)
         bw = max(BADGE_W, text_w + 10)
         # 角标：球体右上角，部分重叠在球体上
-        bx = BALL_MARGIN_SIDE + BALL_VISIBLE - bw + 4
+        bx = ball_x + BALL_VISIBLE - bw + 4
         by = BALL_MARGIN_TOP - BADGE_H + 4
 
         path = QPainterPath()
         path.addRoundedRect(float(bx), float(by), float(bw), float(BADGE_H), BADGE_H / 2, BADGE_H / 2)
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(0xC9, 0x40, 0x43))
+        p.setBrush(QColor(0xF0, 0x64, 0x64))
         p.drawPath(path)
 
         p.setPen(QColor(255, 255, 255))
@@ -433,8 +528,8 @@ class PreviewBar(QWidget):
         # Background
         bg = QPainterPath()
         bg.addRoundedRect(QRectF(0, 0, w, h), 16, 16)
-        p.setPen(QPen(QColor(255, 255, 255, 20), 1))
-        p.setBrush(QColor(26, 26, 26, 245))
+        p.setPen(QPen(QColor(self._theme.lineSoft), 1))
+        p.setBrush(QColor(self._theme.surface1))
         p.drawPath(bg)
 
         # Vertical list items
@@ -450,12 +545,12 @@ class PreviewBar(QWidget):
             row_rect = QRectF(VLIST_PADDING, y, content_w, VLIST_ITEM_H - 2)
             hovered = i == self._hovered_index
 
-            # Row hover highlight
+            # Row hover highlight: mint green translucent overlay
             if hovered:
                 hover_bg = QPainterPath()
                 hover_bg.addRoundedRect(row_rect, 8, 8)
                 p.setPen(Qt.PenStyle.NoPen)
-                p.setBrush(QColor(255, 255, 255, 10))
+                p.setBrush(QColor(124, 224, 195, 18))
                 p.drawPath(hover_bg)
 
             # Thumbnail (40x40, left side)
@@ -466,7 +561,7 @@ class PreviewBar(QWidget):
             # Filename (right of thumbnail)
             text_x = VLIST_PADDING + VLIST_THUMB + 12
             text_w = content_w - VLIST_THUMB - 16
-            p.setPen(QColor(232, 232, 232))
+            p.setPen(QColor(self._theme.textPrimary))
             p.setFont(QFont("Microsoft YaHei", 10))
             filename = self._get_item_filename(item)
             fm = p.fontMetrics()
@@ -475,7 +570,7 @@ class PreviewBar(QWidget):
                        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, elided)
 
             # Sub-info line (type + size)
-            p.setPen(QColor(136, 136, 136))
+            p.setPen(QColor(self._theme.textSecondary))
             p.setFont(QFont("Microsoft YaHei", 8))
             sub_info = self._get_item_subinfo(item)
             p.drawText(QRectF(text_x, y + 28, text_w, 16),
@@ -526,38 +621,48 @@ class PreviewBar(QWidget):
         center = h / 2
 
         # ▲ expand — above center
-        btn = QRectF(ax, center - 30, ACTION_AREA_W, 20)
+        btn = QRectF(ax + 4, center - 30, ACTION_AREA_W - 8, 20)
         path = QPainterPath()
         path.addRoundedRect(btn, 8, 8)
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(255, 255, 255, 20))
+        if self._hovered_btn == "expand":
+            p.setBrush(QColor(124, 224, 195, 40))
+        else:
+            p.setBrush(QColor(self._theme.bgTertiary))
         p.drawPath(path)
-        p.setPen(QColor(136, 136, 136))
+        p.setPen(QColor(self._theme.accentMint) if self._hovered_btn == "expand" else QColor(self._theme.textSecondary))
         p.setFont(QFont("Segoe UI", 10))
         p.drawText(btn, Qt.AlignmentFlag.AlignCenter, "▲")
 
         # Count — centered
         cr = QRectF(ax, center - 8, ACTION_AREA_W, 16)
-        p.setPen(QColor(255, 255, 255, 100))
+        p.setPen(QColor(self._theme.textSecondary))
         p.setFont(QFont("Microsoft YaHei", 8))
         p.drawText(cr, Qt.AlignmentFlag.AlignCenter, str(len(self._items)))
 
         # ✕ close — below center, fully within widget bounds
-        cl = QRectF(ax, center + 10, ACTION_AREA_W, 20)
+        cl = QRectF(ax + 4, center + 10, ACTION_AREA_W - 8, 20)
         cp = QPainterPath()
         cp.addRoundedRect(cl, 8, 8)
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(255, 255, 255, 20))
+        if self._hovered_btn == "close":
+            p.setBrush(QColor(124, 224, 195, 40))
+        else:
+            p.setBrush(QColor(self._theme.bgTertiary))
         p.drawPath(cp)
-        p.setPen(QColor(136, 136, 136))
+        p.setPen(QColor(self._theme.accentMint) if self._hovered_btn == "close" else QColor(self._theme.textSecondary))
+        p.setFont(QFont("Segoe UI", 10))
         p.drawText(cl, Qt.AlignmentFlag.AlignCenter, "✕")
 
     def _paint_thumb(self, p: QPainter, rect: QRectF, item: ClipboardItem, index: int):
-        tp = QPainterPath()
-        tp.addRoundedRect(rect, 10, 10)
-
         hovered = index == self._hovered_index
         dragging = index == self._dragging_index
+
+        if hovered and not dragging:
+            rect = rect.translated(0, -2)
+
+        tp = QPainterPath()
+        tp.addRoundedRect(rect, 10, 10)
 
         if dragging:
             p.setOpacity(0.3)
@@ -616,7 +721,9 @@ class PreviewBar(QWidget):
             hp = QPainterPath()
             hp.addRoundedRect(rect.adjusted(-1, -1, 1, 1), 9, 9)
             p.setBrush(Qt.BrushStyle.NoBrush)
-            p.setPen(QPen(QColor(176, 141, 87, 180), 2))
+            color = QColor(self._theme.accentMint)
+            color.setAlpha(180)
+            p.setPen(QPen(color, 2))
             p.drawPath(hp)
 
         p.setOpacity(1.0)
@@ -634,6 +741,7 @@ class PreviewBar(QWidget):
     def leaveEvent(self, event):
         self._hovered = False
         self._hovered_index = -1
+        self._hovered_btn = ""
         self._hover_timer.start()
         self._long_hover_timer.stop()
         self.update()
@@ -662,6 +770,8 @@ class PreviewBar(QWidget):
                 if dx * dx + dy * dy <= r * r:
                     self._ball_drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
                     self._is_dragging_ball = True
+                    self._pressed = True
+                    self.update()
             return
 
         # Preview mode: right-click on thumbnail
@@ -700,6 +810,20 @@ class PreviewBar(QWidget):
 
         # Preview: hover tracking
         pos = event.position()
+
+        # Track action area buttons hover
+        hovered_btn = ""
+        if pos.x() >= self.width() - ACTION_AREA_W:
+            center = self.height() / 2
+            if pos.y() < center - 5:
+                hovered_btn = "expand"
+            elif pos.y() > center + 5:
+                hovered_btn = "close"
+
+        if hovered_btn != self._hovered_btn:
+            self._hovered_btn = hovered_btn
+            self.update()
+
         idx = self._thumb_at(pos)
         if idx != self._hovered_index:
             self._hovered_index = idx
@@ -719,6 +843,8 @@ class PreviewBar(QWidget):
                 self._drag_start_index = -1
 
     def mouseReleaseEvent(self, event):
+        self._pressed = False
+        self.update()
         was_dragging = self._ball_drag_pos is not None
         if self._mode == "ball" and was_dragging:
             moved = (event.globalPosition().toPoint() - self.frameGeometry().topLeft() - self._ball_drag_pos)
@@ -790,10 +916,10 @@ class PreviewBar(QWidget):
     def _show_ball_context_menu(self, global_pos):
         menu = QMenu(self)
         menu.setStyleSheet(
-            "QMenu { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.08);"
-            " color: #E8E8E8; padding: 4px; border-radius: 12px; }"
+            "QMenu { background: #10161C; border: 1px solid rgba(255,255,255,0.08);"
+            " color: #F0F5F2; padding: 4px; border-radius: 12px; }"
             "QMenu::item { padding: 6px 20px; border-radius: 6px; }"
-            "QMenu::item:selected { background: rgba(176,141,87,0.2); }"
+            "QMenu::item:selected { background: rgba(124,224,195,0.15); color: #7CE0C3; }"
         )
         menu.addAction("显示面板").triggered.connect(self.panel_show_requested.emit)
         menu.addAction("隐藏悬浮球").triggered.connect(self.hide_ball_requested.emit)
@@ -809,10 +935,10 @@ class PreviewBar(QWidget):
         item = self._items[index]
         menu = QMenu(self)
         menu.setStyleSheet(
-            "QMenu { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.08);"
-            " color: #E8E8E8; padding: 4px; border-radius: 12px; }"
+            "QMenu { background: #10161C; border: 1px solid rgba(255,255,255,0.08);"
+            " color: #F0F5F2; padding: 4px; border-radius: 12px; }"
             "QMenu::item { padding: 6px 20px; border-radius: 6px; }"
-            "QMenu::item:selected { background: rgba(176,141,87,0.2); }"
+            "QMenu::item:selected { background: rgba(124,224,195,0.15); color: #7CE0C3; }"
         )
         menu.addAction("复制").triggered.connect(lambda: self.copy_item_requested.emit(item.id))
         menu.addAction("预览").triggered.connect(lambda: self.preview_item_requested.emit(item))
