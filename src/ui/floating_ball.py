@@ -18,14 +18,16 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QApplication, QWidget
 
+from src.ui.design_system import Palette, Fonts, Sizes
+
 logger = logging.getLogger("eleven.ball")
 
-BALL_SIZE = 96
-BALL_INNER = 88
+BALL_SIZE = Sizes.BALL_SIZE
+BALL_INNER = Sizes.BALL_INNER
 BALL_RADIUS = BALL_INNER / 2
 BALL_OFFSET = (BALL_SIZE - BALL_INNER) / 2
-BADGE_H = 22
-BADGE_MIN_W = 22
+BADGE_H = Sizes.BADGE_SIZE
+BADGE_MIN_W = Sizes.BADGE_SIZE
 
 
 class FloatingBall(QWidget):
@@ -74,23 +76,23 @@ class FloatingBall(QWidget):
         # --- Ball body ---
         grad = QLinearGradient(cx - r, cy - r, cx + r, cy + r)
         if self._drag_over:
-            grad.setColorAt(0, QColor(67, 233, 123, 220))
-            grad.setColorAt(1, QColor(56, 249, 215, 220))
+            grad.setColorAt(0, QColor(Palette.STATUS_ONLINE))
+            grad.setColorAt(1, QColor(Palette.STATUS_WARNING))
         elif self._hovered:
-            grad.setColorAt(0, QColor(90, 160, 230, 240))
-            grad.setColorAt(1, QColor(74, 144, 217, 240))
+            grad.setColorAt(0, Palette.qcolor("accent"))
+            grad.setColorAt(1, Palette.qcolor("accent_light"))
         else:
-            grad.setColorAt(0, QColor(74, 144, 217, 220))
-            grad.setColorAt(1, QColor(58, 110, 180, 220))
+            grad.setColorAt(0, Palette.qcolor("accent_light"))
+            grad.setColorAt(1, Palette.qcolor("accent"))
 
-        border_alpha = 100 if (self._hovered or self._drag_over) else 50
-        p.setPen(QPen(QColor(255, 255, 255, border_alpha), 2))
+        border_color = QColor(255, 255, 255, 150) if (self._hovered or self._drag_over) else QColor(255, 255, 255, 80)
+        p.setPen(QPen(border_color, 2))
         p.setBrush(QBrush(grad))
         p.drawEllipse(QPointF(cx, cy), r, r)
 
         # --- Icon ---
-        p.setPen(QColor(255, 255, 255))
-        p.setFont(QFont("Segoe UI Emoji", 28))
+        p.setPen(QColor(Palette.BG_PRIMARY))
+        p.setFont(Fonts.get_font(28, Fonts.WEIGHT_NORMAL, Fonts.FAMILY_EMOJI))
         p.drawText(QRectF(0, 0, BALL_SIZE, BALL_SIZE), Qt.AlignmentFlag.AlignCenter, "📋")
 
         # --- Badge (drawn last, on top, NO clipping) ---
@@ -106,11 +108,11 @@ class FloatingBall(QWidget):
             badge_path = QPainterPath()
             badge_path.addRoundedRect(QRectF(bx, by, bw, bh), bh / 2, bh / 2)
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(255, 68, 68))
+            p.setBrush(QColor(Palette.STATUS_ERROR))
             p.drawPath(badge_path)
 
             p.setPen(QColor(255, 255, 255))
-            p.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+            p.setFont(Fonts.get_font(10, Fonts.WEIGHT_BOLD))
             p.drawText(QRectF(bx, by, bw, bh), Qt.AlignmentFlag.AlignCenter, badge_text)
 
         p.end()

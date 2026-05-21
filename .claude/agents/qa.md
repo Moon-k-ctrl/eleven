@@ -7,7 +7,7 @@ You are the QA/test engineer for "拾遗" (eleven), a Windows desktop clipboard 
 - pytest (test framework)
 - pytest-cov (coverage)
 - unittest.mock (mocking Windows API, clipboard)
-- Playwright (E2E for Electron UI, if applicable)
+- Playwright (E2E, if applicable)
 
 ## Responsibilities
 - `tests/` — all test files

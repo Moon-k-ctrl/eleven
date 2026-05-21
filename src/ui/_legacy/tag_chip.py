@@ -5,6 +5,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QPushButton
 
+from src.ui.design_system import Palette, Fonts, Spacing, Radius
+
 
 def _brighten(hex_color: str, factor: float = 0.25) -> str:
     """Return a brighter version of the given hex color."""
@@ -35,15 +37,16 @@ class TagChip(QPushButton):
 
     def _update_style(self, checked: bool) -> None:
         bg = _brighten(self._color, 0.20) if checked else self._color
-        border = "2px solid #B08D57" if checked else "2px solid transparent"
+        border = f"1px solid {Palette.BORDER}" if checked else "1px solid transparent"
         self.setStyleSheet(
             f"QPushButton {{"
             f"  background: {bg};"
-            f"  color: white;"
+            f"  color: {Palette.TEXT_PRIMARY};"
             f"  border: {border};"
-            f"  border-radius: 14px;"
-            f"  padding: 2px 10px;"
-            f"  font-size: 12px;"
+            f"  border-radius: {Radius.FULL}px;"
+            f"  padding: {Spacing.XS}px {Spacing.MD}px;"
+            f"  font-family: {Fonts.FAMILY_PRIMARY};"
+            f"  font-size: {Fonts.SIZE_MD}px;"
             f"  font-weight: {'bold' if checked else 'normal'};"
             f"}}"
         )

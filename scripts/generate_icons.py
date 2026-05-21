@@ -8,7 +8,6 @@ from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "assets" / "icons"
-ELECTRON_ICON_DIR = Path(__file__).resolve().parent.parent / "electron" / "assets" / "icons"
 
 # Color palette
 BG_START = (64, 80, 200)      # deep blue-purple
@@ -171,7 +170,6 @@ def generate_icon(size: int = 256, output_path: Optional[Path] = None,
 def main() -> None:
     """Generate all icon assets."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    ELECTRON_ICON_DIR.mkdir(parents=True, exist_ok=True)
 
     png_path = OUTPUT_DIR / "icon.png"
     ico_path = OUTPUT_DIR / "icon.ico"
@@ -184,11 +182,6 @@ def main() -> None:
     tray_img = tray_img.resize((16, 16), Image.Resampling.LANCZOS)
     tray_img.save(tray_png, "PNG")
     print(f"Saved tray icon: {tray_png}")
-
-    # Copy to electron assets
-    import shutil
-    shutil.copy(png_path, ELECTRON_ICON_DIR / "icon.png")
-    print(f"Copied to: {ELECTRON_ICON_DIR / 'icon.png'}")
 
 
 if __name__ == "__main__":

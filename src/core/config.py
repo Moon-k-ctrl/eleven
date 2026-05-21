@@ -91,6 +91,12 @@ class Config:
         """Get max items limit."""
         return self._config["max_items"]
 
+    @max_items.setter
+    def max_items(self, value: int) -> None:
+        """Set max items limit."""
+        self._config["max_items"] = value
+        self._save()
+
     @property
     def max_image_size(self) -> tuple[int, int]:
         """Get max image size."""

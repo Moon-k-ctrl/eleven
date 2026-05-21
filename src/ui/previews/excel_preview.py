@@ -36,7 +36,15 @@ class ExcelPreview(QWidget):
     def load_xlsx(self, path: str) -> None:
         try:
             from openpyxl import load_workbook
+        except ImportError:
+            self._browser.setHtml(
+                '<p style="color: #ff6b6b;">需要安装 openpyxl: '
+                'pip install openpyxl</p>'
+            )
+            logger.warning("openpyxl not installed, Excel preview unavailable")
+            return
 
+        try:
             wb = load_workbook(path, read_only=True, data_only=True)
             sheet = wb.active
             if sheet is None:

@@ -30,7 +30,7 @@ def export_to_json(db: Database, file_path: Path,
             "content_html": item.content_html,
             "is_pinned": item.is_pinned,
             "is_favorite": item.is_favorite,
-            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "created_at": (item.created_at.isoformat() if isinstance(item.created_at, datetime) else item.created_at) if item.created_at else None,
             "tags": [{"name": t.name, "color": t.color} for t in (item.tags or [])],
         }
 
@@ -151,7 +151,7 @@ def export_to_csv(db: Database, file_path: Path) -> int:
                 (item.content_html or "")[:500],
                 "是" if item.is_pinned else "否",
                 "是" if item.is_favorite else "否",
-                item.created_at.isoformat() if item.created_at else "",
+                (item.created_at.isoformat() if isinstance(item.created_at, datetime) else str(item.created_at)) if item.created_at else "",
                 tag_names,
             ])
 

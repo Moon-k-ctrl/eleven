@@ -1,4 +1,4 @@
-"""HTTP/WebSocket server bridging Python backend to Electron UI."""
+"""HTTP/WebSocket server for QML UI and API clients."""
 from __future__ import annotations
 
 import asyncio
@@ -371,6 +371,8 @@ def get_config():
 def update_config(body: ConfigUpdate):
     if body.storage_mode is not None:
         config.storage_mode = StorageMode(body.storage_mode)
+    if body.max_items is not None:
+        config.max_items = body.max_items
     return get_config()
 
 

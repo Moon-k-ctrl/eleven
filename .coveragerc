@@ -1,0 +1,10 @@
+[run]
+omit =
+    src/ui/*
+    src/main.py
+    src/run_server.py
+    src/app.py
+    src/api_client.py
+    src/core/clipboard_listener.py
+    src/utils/autostart.py
+    src/utils/global_hotkey.py

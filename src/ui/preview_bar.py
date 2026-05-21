@@ -117,6 +117,18 @@ class PreviewBar(QWidget):
         self._breath_timer.setInterval(33)
         self._breath_timer.timeout.connect(self._animate_breath)
 
+        # Long hover timer (ball → preview expansion)
+        self._long_hover_timer = QTimer(self)
+        self._long_hover_timer.setSingleShot(True)
+        self._long_hover_timer.setInterval(600)
+        self._long_hover_timer.timeout.connect(self._on_long_hover)
+
+        # Ball dragging state to prevent hover trigger
+        self._is_dragging_ball = False
+
+        # Animation lock to prevent interactions during morph
+        self._is_animating = False
+
         self._setup_window()
 
     # ── Window setup ──
@@ -218,6 +230,11 @@ class PreviewBar(QWidget):
         self._items.clear()
         self._morph_to_ball()
 
+    def set_items(self, items: list):
+        """Replace items without triggering morph animation."""
+        self._items = list(items)
+        self.update()
+
     def toggle(self):
         if self.isVisible():
             self.hide()
@@ -228,6 +245,10 @@ class PreviewBar(QWidget):
     # ── Morphing animation ──
 
     def _morph_to_preview(self):
+        if self._is_animating:
+            return
+        self._is_animating = True
+        self._long_hover_timer.stop()
         # Save ball position before morphing (for #6 position restore)
         self._saved_ball_pos = (self.x(), self.y())
 
@@ -238,6 +259,7 @@ class PreviewBar(QWidget):
 
         screen = QApplication.primaryScreen()
         if not screen:
+            self._is_animating = False
             return
         geo = screen.availableGeometry()
         target_x = geo.right() - target_w - 8
@@ -248,11 +270,20 @@ class PreviewBar(QWidget):
         anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         anim.setStartValue(self.geometry())
         anim.setEndValue(self._make_rect(target_x, target_y, target_w, target_h))
-        anim.finished.connect(lambda: setattr(self, '_mode', 'preview'))
+        anim.finished.connect(self._on_preview_morph_finished)
         anim.start()
         self._morph_anim = anim  # prevent GC
 
+    def _on_preview_morph_finished(self):
+        self._mode = "preview"
+        self._is_animating = False
+        self._long_hover_timer.stop()
+        self.update()
+
     def _morph_to_ball(self):
+        if self._is_animating:
+            return
+        self._is_animating = True
         self._scroll_offset = 0
         # Restore saved ball position if available, otherwise use default
         if self._saved_ball_pos:
@@ -260,6 +291,7 @@ class PreviewBar(QWidget):
         else:
             screen = QApplication.primaryScreen()
             if not screen:
+                self._is_animating = False
                 return
             geo = screen.availableGeometry()
             target_x = geo.right() - BALL_WINDOW_W - 20
@@ -270,9 +302,15 @@ class PreviewBar(QWidget):
         anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
         anim.setStartValue(self.geometry())
         anim.setEndValue(self._make_rect(target_x, target_y, BALL_WINDOW_W, BALL_WINDOW_H))
-        anim.finished.connect(lambda: (setattr(self, '_mode', 'ball'), self.all_cleared.emit()))
+        anim.finished.connect(self._on_ball_morph_finished)
         anim.start()
         self._morph_anim = anim
+
+    def _on_ball_morph_finished(self):
+        self._mode = "ball"
+        self._is_animating = False
+        self.all_cleared.emit()
+        self.update()
 
     @staticmethod
     def _make_rect(x, y, w, h):
@@ -300,13 +338,13 @@ class PreviewBar(QWidget):
         cy = by + BALL_VISIBLE / 2
         r = BALL_VISIBLE / 2
 
-        # Shadow — 更柔和，opacity 20%，offset 5px，blur 8px
+        # Shadow — mint-green tinted, matching design spec rgba(84,212,158,0.28)
         for i in range(5, 0, -1):
-            alpha = int(12 * (6 - i))       # 60, 48, 36, 24, 12
+            alpha = int(18 * (6 - i))       # 90, 72, 54, 36, 18
             offset = 3 + i                   # 8, 7, 6, 5, 4
             spread = i * 2 + 2              # 12, 10, 8, 6, 4
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(0, 0, 0, alpha))
+            p.setBrush(QColor(84, 212, 158, alpha))
             p.drawEllipse(
                 int(bx - spread // 2), int(by + offset - spread // 2),
                 BALL_VISIBLE + spread, BALL_VISIBLE + spread
@@ -315,28 +353,30 @@ class PreviewBar(QWidget):
         # Drag-over: pulsing dashed ring
         if self._drag_over:
             ring_r = r + 6 + math.sin(self._ring_phase * math.pi * 2) * 3
-            p.setPen(QPen(QColor(0x3A, 0x8B, 0x40, 180), 2, Qt.PenStyle.DashLine))
+            p.setPen(QPen(QColor(0x7C, 0xE0, 0xC3, 180), 2, Qt.PenStyle.DashLine))
             p.setBrush(Qt.BrushStyle.NoBrush)
             p.drawEllipse(QPointF(cx, cy), ring_r, ring_r)
 
         # Success flash overlay
         if self._flash_active:
             grad = QLinearGradient(bx, by, bx + BALL_VISIBLE, by + BALL_VISIBLE)
-            grad.setColorAt(0, QColor(0x3A, 0x8B, 0x40, 200))
-            grad.setColorAt(1, QColor(0x2E, 0xCC, 0x71, 200))
+            grad.setColorAt(0, QColor(0x7C, 0xE0, 0xC3, 200))
+            grad.setColorAt(1, QColor(0x54, 0xD4, 0x9E, 200))
         elif self._drag_over:
             grad = QLinearGradient(bx, by, bx + BALL_VISIBLE, by + BALL_VISIBLE)
-            grad.setColorAt(0, QColor(0x3A, 0x8B, 0x40))
-            grad.setColorAt(1, QColor(0x2E, 0xCC, 0x71))
+            grad.setColorAt(0, QColor(0x7C, 0xE0, 0xC3))
+            grad.setColorAt(1, QColor(0x54, 0xD4, 0x9E))
         else:
-            # Smooth hover transition using _hover_progress — 暖金色渐变
+            # Smooth hover transition using _hover_progress — 曜石青渐变
             t = self._hover_progress
-            r1 = int(0xB0 + (0xC0 - 0xB0) * t)
-            g1 = int(0x8D + (0x9D - 0x8D) * t)
-            b1 = int(0x57 + (0x67 - 0x57) * t)
-            r2 = int(0x8B + (0x9B - 0x8B) * t)
-            g2 = int(0x69 + (0x79 - 0x69) * t)
-            b2 = int(0x14 + (0x24 - 0x14) * t)
+            # accent-mint #7CE0C3 → hover slightly brighter
+            r1 = int(0x7C + (0x8C - 0x7C) * t)
+            g1 = int(0xE0 + (0xF0 - 0xE0) * t)
+            b1 = int(0xC3 + (0xD3 - 0xC3) * t)
+            # accent-blue #66B8C7 → hover slightly brighter
+            r2 = int(0x66 + (0x76 - 0x66) * t)
+            g2 = int(0xB8 + (0xC8 - 0xB8) * t)
+            b2 = int(0xC7 + (0xD7 - 0xC7) * t)
             grad = QLinearGradient(bx, by, bx + BALL_VISIBLE, by + BALL_VISIBLE)
             grad.setColorAt(0, QColor(r1, g1, b1))
             grad.setColorAt(1, QColor(r2, g2, b2))
@@ -586,15 +626,26 @@ class PreviewBar(QWidget):
     def enterEvent(self, event):
         self._hovered = True
         self._hover_timer.start()
+        # Long hover: ball → preview expansion (only if not dragging)
+        if self._mode == "ball" and self._items and not self._is_dragging_ball:
+            self._long_hover_timer.start()
         self.update()
 
     def leaveEvent(self, event):
         self._hovered = False
         self._hovered_index = -1
         self._hover_timer.start()
+        self._long_hover_timer.stop()
         self.update()
 
+    def _on_long_hover(self):
+        """Ball long hover → morph to preview."""
+        if self._mode == "ball" and self._items:
+            self._morph_to_preview()
+
     def mousePressEvent(self, event):
+        if self._is_animating:
+            return
         pos = event.position()
 
         if self._mode == "ball":
@@ -610,6 +661,7 @@ class PreviewBar(QWidget):
                 dx, dy = pos.x() - cx, pos.y() - cy
                 if dx * dx + dy * dy <= r * r:
                     self._ball_drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                    self._is_dragging_ball = True
             return
 
         # Preview mode: right-click on thumbnail
@@ -623,9 +675,10 @@ class PreviewBar(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             if pos.x() >= self.width() - ACTION_AREA_W:
                 center = self.height() / 2
-                if pos.y() < center - 10:
+                if pos.y() < center - 5:
                     self.expand_requested.emit()
-                elif pos.y() > center + 10:
+                elif pos.y() > center + 5:
+                    # Close/preview bar → morph back to ball
                     self.clear()
                 return
 
@@ -666,12 +719,17 @@ class PreviewBar(QWidget):
                 self._drag_start_index = -1
 
     def mouseReleaseEvent(self, event):
-        if self._mode == "ball" and self._ball_drag_pos:
+        was_dragging = self._ball_drag_pos is not None
+        if self._mode == "ball" and was_dragging:
             moved = (event.globalPosition().toPoint() - self.frameGeometry().topLeft() - self._ball_drag_pos)
             if moved.manhattanLength() < 5:
-                self.clicked.emit()
+                # Single click on ball: morph to preview if items exist
+                if self._items:
+                    self._morph_to_preview()
+                else:
+                    self.clicked.emit()
             self._ball_drag_pos = None
-            # Save position
+            self._is_dragging_ball = False
             self._save_position()
             return
         self._drag_start_pos = None
@@ -776,15 +834,16 @@ class PreviewBar(QWidget):
     # ── Helpers ──
 
     def _thumb_at(self, pos: QPointF) -> int:
+        """Hit test: return item index at pos, or -1. Uses vertical list layout."""
         if self._mode != "preview":
             return -1
-        x = THUMB_PADDING - self._scroll_offset
-        y = (self.height() - THUMB_SIZE) / 2
+        content_w = self.width() - ACTION_AREA_W - VLIST_PADDING * 2
+        y = VLIST_PADDING - self._scroll_offset
         for i in range(min(len(self._items), MAX_VISIBLE_THUMBS)):
-            rect = QRectF(x, y, THUMB_SIZE, THUMB_SIZE)
-            if rect.contains(pos):
+            row_rect = QRectF(VLIST_PADDING, y, content_w, VLIST_ITEM_H - 2)
+            if row_rect.contains(pos):
                 return i
-            x += THUMB_SIZE + THUMB_GAP
+            y += VLIST_ITEM_H
         return -1
 
     def _apply_edge_snap(self, pos: QPoint) -> QPoint:

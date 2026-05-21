@@ -17,8 +17,14 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Path resolution: works in both dev mode and PyInstaller frozen exe
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys._MEIPASS)  # _internal/
+else:
+    BASE_DIR = Path(__file__).parent  # src/
+
 from PyQt6.QtCore import QMimeData, Qt
-from PyQt6.QtGui import QKeySequence, QShortcut
+from src.utils import global_hotkey
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from src.api_client import ApiClient
@@ -26,8 +32,10 @@ from src.core.clipboard_manager import ClipboardManager
 from src.core.config import Config, StorageMode
 from src.core.database import Database
 from src.ui.preview_bar import PreviewBar
-from src.ui.floating_panel import FloatingPanel
 from src.ui.tray_icon import TrayIcon
+from src.ui.preview_window import PreviewWindow
+from src.ui.qml.bridge import QmlBridge, QClipboardListModel
+from src.ui.qml.theme_singleton import ThemeSingleton
 from src.utils.import_export import (
     export_to_csv,
     export_to_json,
@@ -163,22 +171,68 @@ def main() -> None:
     api_client = ApiClient(base_url=BASE_URL)
     api_client.start()
 
-    # UI
-    panel = FloatingPanel(api_client)
+    # QML UI setup
+    bridge = QmlBridge(api_client)
+    model = QClipboardListModel()
+    bridge.set_model(model)
+
+    from PyQt6.QtQml import QQmlApplicationEngine
+    os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+    engine = QQmlApplicationEngine()
+    engine.addImportPath(str(BASE_DIR / "ui"))
+    theme = ThemeSingleton()
+    engine.rootContext().setContextProperty("Theme", theme)
+    engine.rootContext().setContextProperty("bridge", bridge)
+    engine.rootContext().setContextProperty("clipboardModel", model)
+
+    # Log QML warnings/errors
+    def _on_qml_warnings(warnings):
+        for w in warnings:
+            logger.error("QML error: %s (line %d, col %d)", w.toString(), w.line(), w.column())
+    engine.warnings.connect(_on_qml_warnings)
+
+    qml_path = BASE_DIR / "ui" / "qml" / "main.qml"
+    logger.info("Loading QML from: %s", qml_path)
+    engine.load(str(qml_path))
+
+    if not engine.rootObjects():
+        logger.error("Failed to load QML root object")
+        QMessageBox.critical(None, "启动失败", "QML 界面加载失败，请检查文件完整性。")
+        sys.exit(1)
+
+    root = engine.rootObjects()[0]
+    bridge.set_root(root)
 
     # v4.0 预览栏（悬浮球 + 变形预览）
     preview_bar = PreviewBar()
-    preview_bar.clicked.connect(panel.toggle)
-    preview_bar.expand_requested.connect(lambda: (panel.show(), panel.raise_()))
+    preview_bar.clicked.connect(bridge.toggle)
+    preview_bar.expand_requested.connect(lambda: (bridge.show(), bridge.raisePanel()))
     preview_bar.files_dropped.connect(
-        lambda paths: (api_client.import_files(paths, "drag-drop"), panel.refresh_list())
+        lambda paths: (api_client.import_files(paths, "drag-drop"), bridge.refreshList())
     )
-    api_client.items_changed.connect(lambda: preview_bar.update_badge(api_client.get_count()))
-    # 列表面板「发送到预览栏」
-    panel.send_to_preview.connect(lambda items: (preview_bar.add_items(items), panel.hide()))
-    panel.preview_bar_toggle.connect(preview_bar.toggle)
+    def _sync_preview_bar():
+        preview_bar.update_badge(api_client.get_count())
+        items = api_client.search_with_filters(limit=50)
+        preview_bar.set_items(items)
+
+    api_client.items_changed.connect(_sync_preview_bar)
+    # QML panel signals → preview bar
+    root.previewBarToggle.connect(preview_bar.toggle)
+    # Fix 4: prevent GC from destroying preview windows
+    _preview_windows: list[PreviewWindow] = []
+
+    def _open_preview(item):
+        pw = PreviewWindow(item)
+        pw.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        _preview_windows.append(pw)
+        pw.destroyed.connect(lambda: _preview_windows.remove(pw) if pw in _preview_windows else None)
+        pw.show()
+
+    bridge.previewRequested.connect(_open_preview)
+    # "发送到预览栏" — add single item to preview bar
+    bridge.previewBarSendRequested.connect(lambda item: preview_bar.add_items([item]))
     # 悬浮球右键菜单信号
-    preview_bar.panel_show_requested.connect(lambda: (panel.show(), panel.raise_(), panel.search_box.setFocus()))
+    preview_bar.panel_show_requested.connect(lambda: (bridge.show(), bridge.raisePanel(), bridge.focusSearch()))
     preview_bar.hide_ball_requested.connect(preview_bar.hide)
     preview_bar.quit_requested.connect(app.quit)
     preview_bar.toggle_monitoring_requested.connect(
@@ -186,13 +240,13 @@ def main() -> None:
                  tray.showMessage("拾遗", f"剪贴板监听已{'开启' if config.clipboard_enabled else '关闭'}"))
     )
     preview_bar.copy_item_requested.connect(api_client.copy_item)
-    preview_bar.preview_item_requested.connect(panel._on_preview_requested)
+    preview_bar.preview_item_requested.connect(bridge.onPreviewRequested)
     preview_bar.remove_item_requested.connect(lambda item_id: None)  # 仅从预览栏移除
     preview_bar.show()
 
     # Tray icon
     tray = TrayIcon(config=config)
-    tray.toggle_panel.connect(panel.toggle)
+    tray.toggle_panel.connect(bridge.toggle)
     tray.toggle_ball.connect(preview_bar.toggle)
     tray.quit_app.connect(app.quit)
 
@@ -200,7 +254,7 @@ def main() -> None:
     def _on_status_changed(status: str):
         tray.update_status(status)
         preview_bar.update_status(status)
-        panel.update_status(status)
+        bridge.updateStatus(status)
         if status == "online":
             tooltip = "拾遗 - 在线 | Ctrl+Shift+V 唤出"
         elif status == "warning":
@@ -264,15 +318,26 @@ def main() -> None:
     tray.export_json.connect(do_export_json)
     tray.import_json.connect(do_import_json)
     tray.export_csv.connect(do_export_csv)
+    bridge.exportRequested.connect(do_export_json)
     tray.import_csv.connect(do_import_csv)
 
     tray.show()
 
-    # Global shortcut Ctrl+Shift+V
-    shortcut = QShortcut(QKeySequence("Ctrl+Shift+V"), panel)
-    shortcut.activated.connect(panel.toggle)
+    # Global hotkeys via Windows RegisterHotKey (works when app is in background)
+    VK_V = 0x56
+    VK_C = 0x43
+    MOD_CS = global_hotkey.MOD_CONTROL | global_hotkey.MOD_SHIFT | global_hotkey.MOD_NOREPEAT
 
-    # Global shortcut Ctrl+Shift+C — 截取选区内容
+    hotkey_ids: list[int] = []
+
+    # Ctrl+Shift+V — toggle panel
+    try:
+        hid = global_hotkey.register_hotkey(MOD_CS, VK_V, bridge.toggle)
+        hotkey_ids.append(hid)
+    except OSError:
+        logger.warning("Failed to register Ctrl+Shift+V global hotkey")
+
+    # Ctrl+Shift+C — 截取选区内容
     def _capture_selection():
         """Save clipboard → simulate Ctrl+C → read new clipboard → import → restore."""
         import subprocess
@@ -332,10 +397,17 @@ def main() -> None:
         except Exception:
             logger.warning("Failed to restore original clipboard")
 
-    capture_shortcut = QShortcut(QKeySequence("Ctrl+Shift+C"), panel)
-    capture_shortcut.activated.connect(_capture_selection)
+    try:
+        hid = global_hotkey.register_hotkey(MOD_CS, VK_C, _capture_selection)
+        hotkey_ids.append(hid)
+    except OSError:
+        logger.warning("Failed to register Ctrl+Shift+C global hotkey")
 
     logger.info("Running. Ctrl+Shift+V: toggle panel, Ctrl+Shift+C: capture selection.")
+
+    # Cleanup hotkeys on exit
+    import atexit
+    atexit.register(global_hotkey.unregister_all)
 
     sys.exit(app.exec())
 

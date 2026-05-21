@@ -7,7 +7,7 @@
 [![GitHub release](https://img.shields.io/badge/release-v3.1.0-blue)](https://github.com/Moon-k-ctrl/eleven)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)](https://www.python.org/)
-[![Electron](https://img.shields.io/badge/Electron-28.0-red?logo=electron)](https://www.electronjs.org/)
+[![PyQt6](https://img.shields.io/badge/PyQt6-6.11-green?logo=qt)](https://www.riverbankcomputing.com/software/pyqt/)
 
 </div>
 
@@ -69,9 +69,8 @@
 - **python-docx / openpyxl / PyPDF2 / python-pptx**：文件预览
 
 ### 前端
-- **Electron 28**：桌面容器
-- **HTML5 + CSS3 + JavaScript**：UI 渲染
-- **Node.js 20+**
+- **QML**：声明式 UI，与 PyQt6 深度集成
+- **PyQt6 QML Engine**：渲染引擎
 
 ---
 
@@ -91,13 +90,8 @@ cd eleven
 # 安装 Python 依赖
 pip install -r requirements.txt
 
-# 安装 Node.js 依赖
-cd electron
-npm install
-cd .
-
 # 运行（开发模式）
-python src/main.py
+python -m src.app
 
 # 打包（PyInstaller）
 pyinstaller eleven.spec --noconfirm
@@ -132,30 +126,20 @@ eleven/
 ├── src/                  # Python 后端源码
 │   ├── core/            # 核心功能（剪贴板监听、管理器、配置、数据库）
 │   ├── models/          # 数据模型
-│   ├── ui/              # PyQt6 UI（悬浮球、面板、预览）
+│   ├── ui/              # PyQt6/QML UI（面板、悬浮球、托盘、预览）
+│   │   ├── qml/        # QML 主面板、组件、主题
 │   │   └── previews/   # 文件预览器（图片、Word、Excel、PDF、PPT）
 │   ├── utils/           # 工具函数（自启动、导入导出）
 │   ├── main.py          # 后端入口
 │   ├── app.py           # PyQt6 应用
 │   └── server.py       # 本地 HTTP 服务器
-├── electron/            # Electron 前端
-│   ├── main/           # 主进程（窗口管理、托盘、快捷键、网关监控）
-│   ├── renderer/        # 渲染进程（拖拽、通知、状态机）
-│   ├── index.html       # 主界面
-│   ├── dashboard.html   # 列表面板
-│   ├── floating-ball.html  # 悬浮球
-│   ├── preload.js       # 预加载脚本
-│   ├── styles.css       # 全局样式
-│   └── package.json     # npm 配置
 ├── docs/                # 文档
 │   ├── ARCHITECTURE.md  # 架构说明
 │   └── PRD.md          # 产品需求文档
 ├── scripts/              # 辅助脚本
 ├── tests/               # 单元测试
 ├── requirements.txt      # Python 依赖
-├── eleven.spec          # PyInstaller 配置（后端）
-├── eleven-backend.spec   # PyInstaller 配置（后端独立）
-├── eleven-desktop.spec  # PyInstaller 配置（Electron）
+├── eleven.spec          # PyInstaller 配置
 └── README.md            # 本文件
 ```
 
@@ -165,22 +149,12 @@ eleven/
 
 ### 运行开发模式
 ```bash
-# 终端 1：运行后端
-python src/main.py
-
-# 终端 2：运行前端（Electron）
-cd electron
-npm start
+python -m src.app
 ```
 
 ### 构建发布版
 ```bash
-# 构建后端（PyInstaller）
 pyinstaller eleven.spec --noconfirm
-
-# 构建前端（Electron）
-cd electron
-npm run build
 ```
 
 ---
@@ -211,7 +185,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 ## 🙏 致谢
 
 - [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
-- [Electron](https://www.electronjs.org/)
 - [Python](https://www.python.org/)
 - [Pillow](https://python-pillow.org/)
 - [python-docx](https://python-docx.readthedocs.io/)

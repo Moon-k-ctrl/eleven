@@ -8,6 +8,7 @@ from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
 from PyQt6.QtWidgets import QMenu, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QWidget
 
 from src.models.clipboard_item import ClipboardItem, ContentType, Source, Tag
+from src.ui.design_system import Palette, Fonts, Sizes
 from src.ui.drag_handler import DragHandler
 from src.utils.helpers import format_timestamp, truncate_text
 
@@ -30,7 +31,7 @@ class ClipboardItemDelegate(QStyledItemDelegate):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._item_height = 72
+        self._item_height = Sizes.ITEM_HEIGHT
         self._drag_start_pos: QPoint | None = None
         self._drag_item: ClipboardItem | None = None
         self._all_tags: list[Tag] = []
@@ -69,11 +70,11 @@ class ClipboardItemDelegate(QStyledItemDelegate):
         # 背景
         is_selected = item.id is not None and item.id in self._selected_ids
         if self._multi_select_mode and is_selected:
-            painter.fillRect(r, QColor(176, 141, 87, 64))  # 金色半透明高亮
+            painter.fillRect(r, QColor(Palette.ACCENT_GOLD).lighter(130))
         elif option.state & QStyle.StateFlag.State_MouseOver:
-            painter.fillRect(r, QColor(255, 255, 255, 10))  # 白色4%透明
+            painter.fillRect(r, QColor(255, 255, 255, 10))
         else:
-            painter.fillRect(r, QColor(30, 30, 30))
+            painter.fillRect(r, QColor(Palette.BG_PRIMARY))
 
         # 恢复正常透明度（仅背景半透明）
         painter.setOpacity(1.0)
@@ -81,20 +82,20 @@ class ClipboardItemDelegate(QStyledItemDelegate):
         # 多选模式复选框
         checkbox_x = r.left() + 4
         if self._multi_select_mode:
-            painter.setPen(QColor(100, 100, 100))
-            painter.setBrush(QColor(30, 30, 30) if not is_selected else QColor(176, 141, 87))
+            painter.setPen(QColor(Palette.TEXT_TERTIARY))
+            painter.setBrush(QColor(Palette.BG_PRIMARY) if not is_selected else QColor(Palette.TEXT_PRIMARY))
             cb_rect = QRect(checkbox_x, r.top() + 26, 16, 16)
             painter.drawRect(cb_rect)
             if is_selected:
-                painter.setPen(QColor(255, 255, 255))
-                painter.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+                painter.setPen(QColor(Palette.BG_PRIMARY))
+                painter.setFont(Fonts.get_font(10, Fonts.WEIGHT_BOLD))
                 painter.drawText(cb_rect, Qt.AlignmentFlag.AlignCenter, "✓")
             icon_left = checkbox_x + 24
         else:
             icon_left = r.left() + 8
 
         # 左侧 48x48 类型图标/缩略图
-        icon_rect = QRect(icon_left, r.top() + 12, 48, 48)
+        icon_rect = QRect(icon_left, r.top() + 12, Sizes.THUMBNAIL_SIZE, Sizes.THUMBNAIL_SIZE)
         self._paint_type_icon(painter, icon_rect, item)
         content_left = icon_left + 56
 
@@ -112,8 +113,8 @@ class ClipboardItemDelegate(QStyledItemDelegate):
 
         # 第一行：内容预览
         preview_text = self._get_preview_text(item)
-        painter.setFont(QFont("Microsoft YaHei", 10))
-        painter.setPen(QColor(232, 232, 232))
+        painter.setFont(Fonts.get_font(Fonts.SIZE_MD))
+        painter.setPen(QColor(Palette.TEXT_PRIMARY))
         text_width = max(0, del_x - content_left - 12)
         if text_width > 0:
             painter.drawText(content_left, r.top() + 24, text_width, 20,
@@ -122,28 +123,28 @@ class ClipboardItemDelegate(QStyledItemDelegate):
 
         # 时间
         time_text = format_timestamp(item.created_at)
-        painter.setFont(QFont("Microsoft YaHei", 8))
-        painter.setPen(QColor(136, 136, 136))
+        painter.setFont(Fonts.get_font(Fonts.SIZE_XS))
+        painter.setPen(QColor(Palette.TEXT_SECONDARY))
         painter.drawText(content_left, r.top() + 48, time_text)
 
         # 置顶图标
         if item.is_pinned:
-            painter.setPen(QColor(176, 141, 87))  # 品牌金
-            painter.setFont(QFont("Microsoft YaHei", 9, QFont.Weight.Bold))
+            painter.setPen(QColor(Palette.ACCENT_GOLD))
+            painter.setFont(Fonts.get_font(Fonts.SIZE_XS, Fonts.WEIGHT_BOLD))
             painter.drawText(pin_x, r.top() + 8, 20, 20,
                            Qt.AlignmentFlag.AlignCenter, "P")
 
         # 收藏图标
         if item.is_favorite:
-            painter.setPen(QColor(196, 147, 74))  # accent-yellow
-            painter.setFont(QFont("Microsoft YaHei", 9))
+            painter.setPen(QColor(Palette.ACCENT_GOLD_LIGHT))
+            painter.setFont(Fonts.get_font(Fonts.SIZE_XS))
             painter.drawText(fav_x, r.top() + 8, 16, 20,
                            Qt.AlignmentFlag.AlignCenter, "★")
 
         # v3.0 星标图标
         if item.is_starred:
-            painter.setPen(QColor(196, 147, 74))  # accent-yellow
-            painter.setFont(QFont("Microsoft YaHei", 8))
+            painter.setPen(QColor(Palette.ACCENT_GOLD_LIGHT))
+            painter.setFont(Fonts.get_font(Fonts.SIZE_XS, Fonts.WEIGHT_NORMAL, Fonts.FAMILY_EMOJI))
             painter.drawText(star_x, r.top() + 8, 16, 20,
                            Qt.AlignmentFlag.AlignCenter, "⭐")
 
@@ -174,7 +175,7 @@ class ClipboardItemDelegate(QStyledItemDelegate):
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawRoundedRect(chip_rect, 14, 14)
                 painter.setPen(QColor(255, 255, 255))
-                painter.setFont(QFont("Microsoft YaHei", 7))
+                painter.setFont(Fonts.get_font(Fonts.SIZE_XS))
                 painter.drawText(chip_rect, Qt.AlignmentFlag.AlignCenter, tag.name)
                 tag_x += chip_w + 4
 
@@ -212,14 +213,14 @@ class ClipboardItemDelegate(QStyledItemDelegate):
 
         # Background
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(42, 42, 42))
+        painter.setBrush(QColor(Palette.BG_TERTIARY))
         painter.drawRoundedRect(rect, 10, 10)
 
         # For FILES type, draw file-type-specific icon
         if item.content_type == ContentType.FILES and item.content_text:
             ext = self._get_file_ext(item.content_text).lower()
             ext_dot = f".{ext}" if ext else ""
-            color, label = self._FILE_TYPE_STYLES.get(ext_dot, ("#78909C", "F"))
+            color, label = self._FILE_TYPE_STYLES.get(ext_dot, (Palette.TYPE_TEXT, "F"))
             self._paint_file_icon(painter, rect, QColor(color), label, ext)
             return
 
@@ -231,7 +232,7 @@ class ClipboardItemDelegate(QStyledItemDelegate):
         }
         icon = type_icons.get(item.content_type, "📄")
         painter.setPen(QColor(255, 255, 255))
-        painter.setFont(QFont("Segoe UI Emoji", 18))
+        painter.setFont(Fonts.get_font(Fonts.SIZE_XXL, Fonts.WEIGHT_NORMAL, Fonts.FAMILY_EMOJI))
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, icon)
 
     def _paint_file_icon(self, painter: QPainter, rect: QRect,

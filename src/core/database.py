@@ -513,7 +513,7 @@ class Database:
             category=row["category"] if "category" in keys else None,
             source=row["source"] if "source" in keys else Source.CLIPBOARD.value,
             project=row["project"] if "project" in keys else "default",
-            is_starred=bool(row["is_starred"]) if "is_starred" in keys else False,
+            is_starred=bool(int(row["is_starred"])) if "is_starred" in keys and row["is_starred"] is not None else False,
             metadata=row["metadata"] if "metadata" in keys else None,
             created_at=row["created_at"],
             updated_at=row["updated_at"],

@@ -19,13 +19,6 @@ ENV/
 htmlcov/
 .pytest_cache/
 
-# Electron / Node
-node_modules/
-package-lock.json
-yarn.lock
-npm-debug.log
-yarn-error.log
-
 # Build artifacts
 build/
 dist/

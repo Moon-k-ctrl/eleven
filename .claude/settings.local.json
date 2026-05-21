@@ -1,9 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/knigh/projects/clipboard-station/electron/**)",
       "Bash(npm install *)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(pip show *)",
+      "Bash(pip list *)",
+      "Bash(python -c \"from PyQt6.QtQml import QQmlApplicationEngine; print\\('QQmlApplicationEngine available'\\)\")",
+      "Bash(python -c \"import PyQt6; import os; qt_dir = os.path.dirname\\(PyQt6.__file__\\); print\\('PyQt6 location:', qt_dir\\); qml_dir = os.path.join\\(os.path.dirname\\(qt_dir\\), 'PyQt6-Qt6', 'qml'\\); print\\('QML dir:', qml_dir\\); print\\('QML dir exists:', os.path.isdir\\(qml_dir\\)\\); qmldir2 = os.path.join\\(qt_dir, 'Qt6', 'qml'\\); print\\('Alt QML dir:', qmldir2\\); print\\('Alt QML dir exists:', os.path.isdir\\(qmldir2\\)\\)\")",
+      "Bash(ls \"C:/Users/knigh/AppData/Local/Programs/Python/Python312/Lib/site-packages/PyQt6/Qt6/qml/\" 2>&1 | head -30)",
+      "Read(//c/Users/knigh/AppData/Local/Programs/Python/Python312/Lib/site-packages/PyQt6/Qt6/qml/**)",
+      "Bash(python -c \"from PyQt6.QtQml import QQmlApplicationEngine, QQmlEngine, QmlTypes; print\\('All QML imports OK'\\)\")",
+      "Bash(python -c \"from PyQt6.QtQuick import QQuickWindow; print\\('QtQuick available'\\)\")",
+      "Bash(python -c \"from PyQt6.QtQuickWidgets import QQuickWidget; print\\('QtQuickWidgets available'\\)\")",
+      "Bash(python -c \"from PyQt6.QtQuick import QQuickView; from PyQt6.QtQml import QQmlApplicationEngine; print\\('QtQuick and QtQml available'\\)\")",
+      "Bash(python -c \"import PyQt6; print\\(f'PyQt6 version: {PyQt6.QtCore.PYQT_VERSION_STR}'\\); from PyQt6.QtQuickWidgets import QQuickWidget; print\\('QQuickWidget available'\\)\")",
+      "Bash(timeout 12 python -m src.app)"
     ]
   }
 }

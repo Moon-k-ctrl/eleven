@@ -24,6 +24,7 @@ from src.api_client import ApiClient
 from src.models.clipboard_item import ClipboardItem
 from src.ui.clipboard_list_model import ClipboardListModel
 from src.ui.clipboard_item_delegate import ClipboardItemDelegate
+from src.ui.design_system import Palette, Fonts, Spacing, Radius, Sizes
 from src.ui.tag_chip import TagChip
 from src.ui.tag_dialog import TagDialog
 
@@ -35,42 +36,43 @@ def _hex_to_rgb(hex_color: str) -> str:
     h = hex_color.lstrip("#")
     return f"{int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)}"
 
-PANEL_STYLE = """
-QListView {
-    background: #1E1E1E;
+PANEL_STYLE = f"""
+QListView {{
+    background: {Palette.BG_PRIMARY};
     border: none;
     outline: none;
-}
-QListView::item {
-    padding: 2px;
+}}
+QListView::item {{
+    padding: {Spacing.XS}px;
     border: none;
-}
-QListView::item:selected {
-    background: rgba(176, 141, 87, 0.25);
-}
-QLineEdit {
-    background: #252525;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 10px 12px;
-    color: #E8E8E8;
-    font-size: 13px;
-}
-QLineEdit:focus {
-    border-color: #B08D57;
-}
-QPushButton[group="tab"] {
-    background: #2A2A2A;
+}}
+QListView::item:selected {{
+    background: {Palette.BG_ACTIVE};
+}}
+QLineEdit {{
+    background: {Palette.BG_PRIMARY};
+    border: 1px solid {Palette.BORDER};
+    border-radius: {Radius.MD}px;
+    padding: {Spacing.SM}px {Spacing.MD}px;
+    color: {Palette.TEXT_PRIMARY};
+    font-family: {Fonts.FAMILY_PRIMARY};
+    font-size: {Fonts.SIZE_LG}px;
+}}
+QLineEdit:focus {{
+    border-color: {Palette.TEXT_PRIMARY};
+}}
+QPushButton[group="tab"] {{
+    background: {Palette.BG_SECONDARY};
     border: none;
-    border-radius: 6px;
-    padding: 4px 8px;
-    color: #888;
-    font-size: 11px;
-}
-QPushButton[group="tab"]:checked {
-    background: rgba(176, 141, 87, 0.25);
-    color: white;
-}
+    border-radius: {Radius.SM}px;
+    padding: {Spacing.XS}px {Spacing.SM}px;
+    color: {Palette.TEXT_SECONDARY};
+    font-size: {Fonts.SIZE_SM}px;
+}}
+QPushButton[group="tab"]:checked {{
+    background: {Palette.TEXT_PRIMARY};
+    color: {Palette.BG_PRIMARY};
+}}
 """
 
 
@@ -83,7 +85,7 @@ class FloatingPanel(QWidget):
     def __init__(self, api_client: ApiClient):
         super().__init__()
         self.api_client = api_client
-        self._current_group_id: Optional[int] = None
+        self._current_group_id: Optional[int] = None  # kept for API compat, no longer exposed in UI
         self._group_buttons: list[QPushButton] = []  # deprecated, kept for compat
         self._current_category: Optional[str] = None
         self._category_buttons: list[QPushButton] = []
@@ -100,7 +102,6 @@ class FloatingPanel(QWidget):
         self._setup_window()
         self._setup_ui()
         self._connect_signals()
-        self._load_source_combo()
         self._load_categories()
         self._load_project_combo()
         self._load_tags()
@@ -138,25 +139,26 @@ class FloatingPanel(QWidget):
         # 状态点 (8px)
         self._status_dot = QLabel()
         self._status_dot.setFixedSize(8, 8)
-        self._status_dot.setStyleSheet("background: #757575; border-radius: 4px; margin-left: 4px;")
+        self._status_dot.setStyleSheet(f"background: {Palette.STATUS_OFFLINE}; border-radius: 4px; margin-left: {Spacing.XS}px;")
         title_layout.addWidget(self._status_dot)
 
         self._capacity_label = QLabel()
-        self._capacity_label.setStyleSheet("color: #666; font-size: 12px;")
+        self._capacity_label.setStyleSheet(f"color: {Palette.TEXT_TERTIARY}; font-size: {Fonts.SIZE_MD}px;")
         title_layout.addWidget(self._capacity_label)
 
         title_layout.addStretch()
 
         self._merge_btn = QPushButton("合并")
-        self._merge_btn.setStyleSheet("color: #B08D57; background: none; border: none;")
+        self._merge_btn.setStyleSheet(f"color: {Palette.TEXT_PRIMARY}; background: none; border: none; font-weight: {Fonts.WEIGHT_MEDIUM};")
         self._merge_btn.clicked.connect(self._on_merge)
         self._merge_btn.setVisible(False)
         title_layout.addWidget(self._merge_btn)
 
         self._to_preview_btn = QPushButton("预览栏")
         self._to_preview_btn.setStyleSheet(
-            "QPushButton { color: #B08D57; background: none; border: none; font-size: 12px; padding: 4px 8px; }"
-            "QPushButton:hover { background: rgba(176,141,87,0.15); border-radius: 6px; }"
+            f"QPushButton {{ color: {Palette.TEXT_PRIMARY}; background: none; border: none; "
+            f"font-size: {Fonts.SIZE_MD}px; padding: {Spacing.XS}px {Spacing.SM}px; font-weight: {Fonts.WEIGHT_MEDIUM}; }}"
+            f"QPushButton:hover {{ background: {Palette.BG_HOVER}; border-radius: {Radius.SM}px; }}"
         )
         self._to_preview_btn.setCursor(Qt.CursorShape.ArrowCursor)
         self._to_preview_btn.clicked.connect(self._on_preview_bar_toggle)
@@ -164,8 +166,9 @@ class FloatingPanel(QWidget):
 
         self._select_btn = QPushButton("多选")
         self._select_btn.setStyleSheet(
-            "QPushButton { color: #B08D57; background: none; border: none; font-size: 12px; padding: 4px 8px; }"
-            "QPushButton:hover { background: rgba(176,141,87,0.15); border-radius: 6px; }"
+            f"QPushButton {{ color: {Palette.TEXT_PRIMARY}; background: none; border: none; "
+            f"font-size: {Fonts.SIZE_MD}px; padding: {Spacing.XS}px {Spacing.SM}px; font-weight: {Fonts.WEIGHT_MEDIUM}; }}"
+            f"QPushButton:hover {{ background: {Palette.BG_HOVER}; border-radius: {Radius.SM}px; }}"
         )
         self._select_btn.setCursor(Qt.CursorShape.ArrowCursor)
         self._select_btn.setCheckable(True)
@@ -174,8 +177,9 @@ class FloatingPanel(QWidget):
 
         self._export_btn_title = QPushButton("导出")
         self._export_btn_title.setStyleSheet(
-            "QPushButton { color: #B08D57; background: none; border: none; font-size: 12px; padding: 4px 8px; }"
-            "QPushButton:hover { background: rgba(176,141,87,0.15); border-radius: 6px; }"
+            f"QPushButton {{ color: {Palette.TEXT_PRIMARY}; background: none; border: none; "
+            f"font-size: {Fonts.SIZE_MD}px; padding: {Spacing.XS}px {Spacing.SM}px; font-weight: {Fonts.WEIGHT_MEDIUM}; }}"
+            f"QPushButton:hover {{ background: {Palette.BG_HOVER}; border-radius: {Radius.SM}px; }}"
         )
         self._export_btn_title.setCursor(Qt.CursorShape.ArrowCursor)
         self._export_btn_title.clicked.connect(self._on_export_from_title)
@@ -183,8 +187,8 @@ class FloatingPanel(QWidget):
 
         clear_btn = QPushButton("清空")
         clear_btn.setStyleSheet(
-            "QPushButton { color: #C94043; background: none; border: none; }"
-            "QPushButton:hover { background: rgba(201,64,67,0.15); border-radius: 6px; }"
+            f"QPushButton {{ color: {Palette.STATUS_ERROR}; background: none; border: none; }}"
+            f"QPushButton:hover {{ background: rgba({_hex_to_rgb(Palette.STATUS_ERROR)},0.1); border-radius: {Radius.SM}px; }}"
         )
         clear_btn.setCursor(Qt.CursorShape.ArrowCursor)
         clear_btn.clicked.connect(self._on_clear)
@@ -209,33 +213,30 @@ class FloatingPanel(QWidget):
 
         # 项目下拉
         proj_label = QLabel("项目")
-        proj_label.setStyleSheet("color: #666; font-size: 11px;")
+        proj_label.setStyleSheet(f"color: {Palette.TEXT_TERTIARY}; font-size: {Fonts.SIZE_SM}px;")
         self._filter_bar.addWidget(proj_label)
         self._project_combo = QComboBox()
         self._project_combo.setStyleSheet(
-            "QComboBox { background: #252525; color: #E8E8E8; border: none;"
-            " border-radius: 6px; padding: 3px 8px; font-size: 11px; min-width: 80px; }"
+            f"QComboBox {{ background: {Palette.BG_SECONDARY}; color: {Palette.TEXT_PRIMARY}; border: none;"
+            f" border-radius: {Radius.SM}px; padding: {Spacing.XS}px {Spacing.SM}px; font-size: {Fonts.SIZE_SM}px; min-width: 80px; }}"
             "QComboBox::drop-down { border: none; }"
-            "QComboBox QAbstractItemView { background: #1A1A1A; color: #E8E8E8;"
-            " selection-background-color: rgba(176,141,87,0.25); }"
+            f"QComboBox QAbstractItemView {{ background: {Palette.BG_PRIMARY}; color: {Palette.TEXT_PRIMARY};"
+            f" selection-background-color: rgba({_hex_to_rgb(Palette.ACCENT_GOLD)},0.25); }}"
         )
         self._project_combo.currentTextChanged.connect(self._on_project_changed)
         self._filter_bar.addWidget(self._project_combo)
 
-        # 来源下拉
-        src_label = QLabel("来源")
-        src_label.setStyleSheet("color: #666; font-size: 11px;")
-        self._filter_bar.addWidget(src_label)
-        self._source_combo = QComboBox()
-        self._source_combo.setStyleSheet(
-            "QComboBox { background: #252525; color: #E8E8E8; border: none;"
-            " border-radius: 6px; padding: 3px 8px; font-size: 11px; min-width: 80px; }"
-            "QComboBox::drop-down { border: none; }"
-            "QComboBox QAbstractItemView { background: #1A1A1A; color: #E8E8E8;"
-            " selection-background-color: rgba(176,141,87,0.25); }"
+        # 项目加号按钮
+        self._add_project_btn = QPushButton("+")
+        self._add_project_btn.setFixedSize(24, 24)
+        self._add_project_btn.setStyleSheet(
+            f"QPushButton {{ background: {Palette.ACCENT_GOLD}; color: #fff; border: none;"
+            f" border-radius: 12px; font-size: {Fonts.SIZE_LG}px; font-weight: bold; }}"
+            f"QPushButton:hover {{ background: {Palette.ACCENT_GOLD_LIGHT}; }}"
         )
-        self._source_combo.currentTextChanged.connect(self._on_source_changed)
-        self._filter_bar.addWidget(self._source_combo)
+        self._add_project_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._add_project_btn.clicked.connect(self._on_create_project)
+        self._filter_bar.addWidget(self._add_project_btn)
 
         self._filter_bar.addStretch()
         layout.addLayout(self._filter_bar)
@@ -256,13 +257,13 @@ class FloatingPanel(QWidget):
         )
         self._tag_bar_scroll.setFixedHeight(30)
         self._tag_bar_scroll.setStyleSheet(
-            "QScrollArea { background: transparent; border: none; }"
+            f"QScrollArea {{ background: transparent; border: none; }}"
         )
         tag_bar_container = QWidget()
-        tag_bar_container.setStyleSheet("background: transparent;")
+        tag_bar_container.setStyleSheet(f"background: transparent;")
         self._tag_bar = QHBoxLayout(tag_bar_container)
         self._tag_bar.setContentsMargins(0, 0, 0, 0)
-        self._tag_bar.setSpacing(4)
+        self._tag_bar.setSpacing(Spacing.XS)
         self._tag_bar_scroll.setWidget(tag_bar_container)
         layout.addWidget(self._tag_bar_scroll)
 
@@ -287,8 +288,8 @@ class FloatingPanel(QWidget):
         self._search_clear_btn.setFixedSize(24, 24)
         self._search_clear_btn.setCursor(Qt.CursorShape.ArrowCursor)
         self._search_clear_btn.setStyleSheet(
-            "QPushButton { color: #666; background: none; border: none; font-size: 12px; }"
-            "QPushButton:hover { color: #E8E8E8; }"
+            f"QPushButton {{ color: {Palette.TEXT_TERTIARY}; background: none; border: none; font-size: {Fonts.SIZE_MD}px; }}"
+            f"QPushButton:hover {{ color: {Palette.TEXT_PRIMARY}; }}"
         )
         self._search_clear_btn.clicked.connect(self._clear_search)
         self._search_clear_btn.setVisible(False)
@@ -301,31 +302,31 @@ class FloatingPanel(QWidget):
         self._action_bar.setVisible(False)
         action_layout = QHBoxLayout(self._action_bar)
         action_layout.setContentsMargins(0, 0, 0, 0)
-        action_layout.setSpacing(4)
+        action_layout.setSpacing(Spacing.XS)
 
         self._selection_label = QLabel("已选 0 项")
-        self._selection_label.setStyleSheet("color: #888; font-size: 11px;")
+        self._selection_label.setStyleSheet(f"color: {Palette.TEXT_SECONDARY}; font-size: {Fonts.SIZE_SM}px;")
         action_layout.addWidget(self._selection_label)
 
         action_layout.addStretch()
 
         select_all_btn = QPushButton("全选")
-        select_all_btn.setStyleSheet("color: #888; background: none; border: none; font-size: 11px;")
+        select_all_btn.setStyleSheet(f"color: {Palette.TEXT_SECONDARY}; background: none; border: none; font-size: {Fonts.SIZE_SM}px;")
         select_all_btn.clicked.connect(self._on_select_all)
         action_layout.addWidget(select_all_btn)
 
         export_btn = QPushButton("导出")
-        export_btn.setStyleSheet("color: #B08D57; background: none; border: none; font-size: 11px;")
+        export_btn.setStyleSheet(f"color: {Palette.ACCENT_GOLD}; background: none; border: none; font-size: {Fonts.SIZE_SM}px;")
         export_btn.clicked.connect(self._on_export_selected)
         action_layout.addWidget(export_btn)
 
         delete_btn = QPushButton("删除")
-        delete_btn.setStyleSheet("color: #C94043; background: none; border: none; font-size: 11px;")
+        delete_btn.setStyleSheet(f"color: {Palette.STATUS_ERROR}; background: none; border: none; font-size: {Fonts.SIZE_SM}px;")
         delete_btn.clicked.connect(self._on_batch_delete)
         action_layout.addWidget(delete_btn)
 
         cancel_btn = QPushButton("取消")
-        cancel_btn.setStyleSheet("color: #666; background: none; border: none; font-size: 11px;")
+        cancel_btn.setStyleSheet(f"color: {Palette.TEXT_TERTIARY}; background: none; border: none; font-size: {Fonts.SIZE_SM}px;")
         cancel_btn.clicked.connect(self._exit_multi_select)
         action_layout.addWidget(cancel_btn)
 
@@ -363,22 +364,12 @@ class FloatingPanel(QWidget):
         self._empty_label = QLabel("还没有收录内容\n\n拖入文件 / 按 Ctrl+V 收录", self)
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._empty_label.setStyleSheet(
-            "color: #666; font-size: 14px; background: transparent;"
+            f"color: {Palette.TEXT_TERTIARY}; font-size: {Fonts.SIZE_XL}px; background: transparent;"
         )
         self._empty_label.setVisible(False)
 
     def _connect_signals(self) -> None:
         self.api_client.items_changed.connect(self.refresh_list)
-
-    def _load_source_combo(self) -> None:
-        self._source_combo.blockSignals(True)
-        self._source_combo.clear()
-        self._source_combo.addItem("全部")
-        groups = self.api_client.get_groups()
-        for group in groups:
-            self._source_combo.addItem(group["name"], group["id"])
-        self._source_combo.setCurrentIndex(0)
-        self._source_combo.blockSignals(False)
 
     def _load_tags(self) -> None:
         for chip in self._tag_chips:
@@ -400,15 +391,15 @@ class FloatingPanel(QWidget):
             self._tag_chips.append(chip)
 
         tag_label = QLabel("标签")
-        tag_label.setStyleSheet("color: #666; font-size: 12px; margin-right: 2px;")
+        tag_label.setStyleSheet(f"color: {Palette.TEXT_TERTIARY}; font-size: {Fonts.SIZE_MD}px; margin-right: {Spacing.XS}px;")
         self._tag_bar.addWidget(tag_label)
 
         add_tag_btn = QPushButton("+")
         add_tag_btn.setFixedSize(24, 24)
         add_tag_btn.setStyleSheet(
-            "QPushButton { background: rgba(255,255,255,0.08); color: #888;"
-            "  border: 1px dashed #4A4A4A; border-radius: 50%; font-size: 14px; }"
-            "QPushButton:hover { color: #E8E8E8; border-color: #B08D57; }"
+            f"QPushButton {{ background: rgba(255,255,255,0.08); color: {Palette.TEXT_SECONDARY};"
+            f"  border: 1px dashed #4A4A4A; border-radius: 50%; font-size: {Fonts.SIZE_LG}px; }}"
+            f"QPushButton:hover {{ color: {Palette.TEXT_PRIMARY}; border-color: {Palette.ACCENT_GOLD}; }}"
         )
         add_tag_btn.clicked.connect(self._open_tag_dialog)
         self._tag_bar.addWidget(add_tag_btn)
@@ -480,11 +471,6 @@ class FloatingPanel(QWidget):
         self._current_project = data if data else "all"
         self.refresh_list()
 
-    def _on_source_changed(self, text: str) -> None:
-        data = self._source_combo.currentData()
-        self._current_group_id = data  # None for "全部"
-        self.refresh_list()
-
     def _on_create_project(self) -> None:
         from PyQt6.QtWidgets import QInputDialog
         name, ok = QInputDialog.getText(self, "创建项目", "项目名称:")
@@ -501,10 +487,10 @@ class FloatingPanel(QWidget):
         from PyQt6.QtWidgets import QMenu, QInputDialog, QColorDialog, QMessageBox
         menu = QMenu(self)
         menu.setStyleSheet(
-            "QMenu { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.08);"
-            " color: #E8E8E8; padding: 4px; border-radius: 12px; }"
-            "QMenu::item { padding: 6px 20px; border-radius: 6px; }"
-            "QMenu::item:selected { background: rgba(176,141,87,0.2); }"
+            f"QMenu {{ background: {Palette.BG_SECONDARY}; border: 1px solid {Palette.BORDER};"
+            f" color: {Palette.TEXT_PRIMARY}; padding: {Spacing.XS}px; border-radius: {Radius.XL}px; }}"
+            f"QMenu::item {{ padding: {Spacing.SM}px {Spacing.XL}px; border-radius: {Radius.SM}px; }}"
+            f"QMenu::item:selected {{ background: rgba({_hex_to_rgb(Palette.ACCENT_GOLD)},0.2); }}"
         )
         menu.addAction("重命名").triggered.connect(lambda: self._rename_project(project_id, name))
         menu.addAction("修改颜色").triggered.connect(lambda: self._recolor_project(project_id, name))
@@ -734,14 +720,14 @@ class FloatingPanel(QWidget):
         self._select_btn.setText("取消多选" if self._multi_select_mode else "多选")
         if self._multi_select_mode:
             self._select_btn.setStyleSheet(
-                "QPushButton { color: #fff; background: rgba(176,141,87,0.3);"
-                " border: none; font-size: 12px; padding: 4px 8px; border-radius: 6px; }"
+                f"QPushButton {{ color: #fff; background: rgba({_hex_to_rgb(Palette.ACCENT_GOLD)},0.3);"
+                f" border: none; font-size: {Fonts.SIZE_MD}px; padding: {Spacing.XS}px {Spacing.SM}px; border-radius: {Radius.SM}px; }}"
             )
         else:
             self._select_btn.setStyleSheet(
-                "QPushButton { color: #B08D57; background: none; border: none;"
-                " font-size: 12px; padding: 4px 8px; }"
-                "QPushButton:hover { background: rgba(176,141,87,0.15); border-radius: 6px; }"
+                f"QPushButton {{ color: {Palette.ACCENT_GOLD}; background: none; border: none;"
+                f" font-size: {Fonts.SIZE_MD}px; padding: {Spacing.XS}px {Spacing.SM}px; }}"
+                f"QPushButton:hover {{ background: rgba({_hex_to_rgb(Palette.ACCENT_GOLD)},0.15); border-radius: {Radius.SM}px; }}"
             )
         self._select_btn.setCursor(Qt.CursorShape.ArrowCursor)
         self._select_btn.blockSignals(False)

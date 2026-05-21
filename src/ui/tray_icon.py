@@ -11,6 +11,7 @@ from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPainter, QPen, QPixmap,
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMenu, QMessageBox, QSystemTrayIcon, QWidget
 
 from src.core.config import Config, StorageMode
+from src.ui.design_system import Palette, Fonts
 from src.utils.autostart import is_autostart_enabled, set_autostart
 
 logger = logging.getLogger("eleven.tray")
@@ -30,10 +31,10 @@ class TrayIcon(QSystemTrayIcon):
 
     # 状态颜色映射
     _STATUS_COLORS = {
-        "online": QColor(76, 175, 80),     # 绿色
-        "warning": QColor(255, 152, 0),    # 橙色
-        "error": QColor(244, 67, 54),      # 红色
-        "offline": QColor(117, 117, 117),  # 灰色
+        "online": QColor(Palette.STATUS_ONLINE),
+        "warning": QColor(Palette.STATUS_WARNING),
+        "error": QColor(Palette.STATUS_ERROR),
+        "offline": QColor(Palette.STATUS_OFFLINE),
     }
 
     def __init__(self, config: Config, parent: Optional[QWidget] = None):
@@ -98,11 +99,11 @@ class TrayIcon(QSystemTrayIcon):
         bg_path = QPainterPath()
         bg_path.addRoundedRect(QRectF(2, 2, size - 4, size - 4), 12, 12)
         painter.setPen(Qt.PenStyle.NoPen)
-        # 金色渐变背景
+        # 纯黑渐变背景（Notion风格）
         from PyQt6.QtGui import QLinearGradient
         grad = QLinearGradient(2, 2, size - 2, size - 2)
-        grad.setColorAt(0, QColor(0xB0, 0x8D, 0x57))
-        grad.setColorAt(1, QColor(0x8B, 0x69, 0x14))
+        grad.setColorAt(0, QColor(Palette.ACCENT_LIGHT))
+        grad.setColorAt(1, QColor(Palette.ACCENT))
         painter.setBrush(QBrush(grad))
         painter.drawPath(bg_path)
 
@@ -110,7 +111,7 @@ class TrayIcon(QSystemTrayIcon):
         clip_rect = QRectF(16, 12, 32, 40)
         clip_path = QPainterPath()
         clip_path.addRoundedRect(clip_rect, 4, 4)
-        painter.setPen(QPen(QColor(255, 255, 255, 220), 2.5))
+        painter.setPen(QPen(QColor(Palette.BG_PRIMARY), 2.5))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawPath(clip_path)
 
@@ -119,13 +120,12 @@ class TrayIcon(QSystemTrayIcon):
         tab_path = QPainterPath()
         tab_path.addRoundedRect(tab_rect, 3, 3)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(255, 255, 255, 220))
+        painter.setBrush(QColor(Palette.BG_PRIMARY))
         painter.drawPath(tab_path)
 
         # "11" text
-        painter.setPen(QColor(255, 255, 255))
-        from PyQt6.QtGui import QFont
-        font = QFont("Segoe UI", 14, QFont.Weight.Bold)
+        painter.setPen(QColor(Palette.BG_PRIMARY))
+        font = Fonts.get_font(14, Fonts.WEIGHT_BOLD, Fonts.FAMILY_SECONDARY)
         painter.setFont(font)
         painter.drawText(clip_rect.adjusted(0, 6, 0, 0), Qt.AlignmentFlag.AlignCenter, "11")
 

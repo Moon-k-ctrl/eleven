@@ -66,7 +66,7 @@ def classify_item(item: "ClipboardItem") -> str:
     if item.content_type == ContentType.FILES and item.content_text:
         first_file = item.content_text.split("\n")[0].strip()
         ext = Path(first_file).suffix.lower()
-        return _FILE_CATEGORY_MAP.get(ext, Category.DEFAULT.value).value
+        return _FILE_CATEGORY_MAP.get(ext, Category.DEFAULT).value
     return Category.DEFAULT.value
 
 

@@ -1,0 +1,11 @@
+TitleBar 1.0 TitleBar.qml
+FilterBar 1.0 FilterBar.qml
+TagBar 1.0 TagBar.qml
+SearchBar 1.0 SearchBar.qml
+ActionBar 1.0 ActionBar.qml
+ClipboardListView 1.0 ClipboardListView.qml
+ClipboardItemDelegate 1.0 ClipboardItemDelegate.qml
+EmptyState 1.0 EmptyState.qml
+DropOverlay 1.0 DropOverlay.qml
+TagChip 1.0 TagChip.qml
+CategoryButton 1.0 CategoryButton.qml

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from PyQt6.QtQml import QQmlEngine, QQmlApplicationEngine; from PyQt6.QtQuick import QQuickView; from PyQt6.QtQuickWidgets import QQuickWidget; print\\('All QML imports successful'\\)\")",
+      "Bash(python -c \"from PyQt6.QtCore import QT_VERSION_STR; print\\(f'Qt version: {QT_VERSION_STR}'\\)\")",
+      "Bash(python -c \"from src.ui.qml.bridge import QmlBridge, QClipboardListModel; print\\('Bridge imports OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('src/app.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('src/app.py', encoding='utf-8'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Read(//c/Users/knigh/Documents/Codex/2026-05-17/files-mentioned-by-the-user-ui/**)"
+    ]
+  }
+}

@@ -1,24 +1,20 @@
 # UI Agent
 
 ## Role
-You are the frontend/UI engineer for "拾遗" (eleven), a Windows desktop clipboard manager. You focus on PyQt6 UI components, the floating panel, and the optional Electron frontend.
+You are the frontend/UI engineer for "拾遗" (eleven), a Windows desktop clipboard manager. You focus on PyQt6/QML UI components, the floating panel, and the system tray.
 
 ## Tech Stack
-- Python 3.11 + PyQt6 (desktop UI)
-- Electron (optional web UI in `electron/`)
+- Python 3.11 + PyQt6 + QML (desktop UI)
 - Pillow (image display)
 - Win32 API (via pywin32 for system tray, hotkeys)
 
 ## Responsibilities
-- `src/ui/` — all PyQt6 UI components:
-  - floating_panel.py — main floating window
-  - clipboard_item_widget.py — individual item display
-  - clipboard_item_delegate.py — custom rendering
-  - clipboard_list_model.py — Qt model for clipboard list
-  - tray_icon.py — system tray icon
-  - drag_handler.py — drag and drop
-  - acrylic.py — acrylic/glass effects
-- `electron/` — Electron frontend (if applicable)
+- `src/ui/` — all PyQt6/QML UI components:
+  - qml/ — QML 主面板、组件、主题
+  - floating_ball.py — 悬浮球与预览栏
+  - preview_bar.py — 预览栏
+  - tray_icon.py — 系统托盘
+  - acrylic.py — 亚克力/云母特效
 
 ## Constraints
 - Do NOT modify `src/core/`, `src/models/`, `src/utils/` files (those belong to the Core Agent)
