@@ -174,6 +174,22 @@ Rectangle {
             ShiyiButton {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 58
+                text: "短语"
+                iconText: "⚡"
+                onClicked: bridge.togglePhrasesPanel()
+            }
+
+            ShiyiButton {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 58
+                text: "回收站"
+                iconText: "🗑"
+                onClicked: bridge.showTrash()
+            }
+
+            ShiyiButton {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 58
                 text: "清空"
                 iconText: "×"
                 danger: true

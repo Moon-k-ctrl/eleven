@@ -21,6 +21,7 @@ def test_insert_and_get():
         assert len(items) == 1
         assert items[0].content_text == "hello world"
         assert items[0].id == item_id
+        db.close()
 
 
 def test_dedup():
@@ -32,6 +33,7 @@ def test_dedup():
             content_type=ContentType.TEXT, content_text="dup test", content_hash=h,
         ))
         assert db.exists_hash(h)
+        db.close()
 
 
 def test_delete():
@@ -44,6 +46,7 @@ def test_delete():
         item_id = db.insert_item(item)
         db.delete_item(item_id)
         assert db.count() == 0
+        db.close()
 
 
 def test_search():
@@ -60,3 +63,58 @@ def test_search():
         results = db.search("Python")
         assert len(results) >= 1
         assert any("Python" in (r.content_text or "") for r in results)
+        db.close()
+
+
+def test_delete_items_batch():
+    with tempfile.TemporaryDirectory() as td:
+        db = Database(Path(td) / "test.db")
+        ids = []
+        for i in range(5):
+            item = ClipboardItem(
+                content_type=ContentType.TEXT,
+                content_text=f"batch item {i}",
+                content_hash=ClipboardItem.compute_hash(f"batch item {i}"),
+            )
+            ids.append(db.insert_item(item))
+        assert db.count() == 5
+        deleted = db.delete_items_batch(ids[:3])
+        assert deleted == 3
+        assert db.count() == 2
+        db.close()
+
+
+def test_staging_crud():
+    with tempfile.TemporaryDirectory() as td:
+        db = Database(Path(td) / "test.db")
+        assert db.staging_count() == 0
+
+        # Add staging item
+        sid = db.add_staging_item(
+            content_type="TEXT",
+            content_text="staging test",
+        )
+        assert sid > 0
+        assert db.staging_count() == 1
+
+        # Get staging items
+        items = db.get_staging_items()
+        assert len(items) == 1
+        assert items[0]["content_text"] == "staging test"
+
+        # Get by id
+        item = db.get_staging_item_by_id(sid)
+        assert item is not None
+        assert item["content_text"] == "staging test"
+
+        # Remove
+        db.remove_staging_item(sid)
+        assert db.staging_count() == 0
+
+        # Add multiple then clear
+        for i in range(3):
+            db.add_staging_item(content_type="TEXT", content_text=f"item {i}")
+        assert db.staging_count() == 3
+        db.clear_staging_items()
+        assert db.staging_count() == 0
+        db.close()

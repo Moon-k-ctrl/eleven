@@ -44,6 +44,7 @@ class ClipboardManager(QObject):
         self.db = db or Database(config=self.config)
         self._listener = ClipboardListener(self._on_clipboard_change)
         self._listener_thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
         self._ignore_next = False  # 防止自己写入触发监听
         self._callbacks: list[Callable[[], None]] = []  # 服务端模式回调
 
@@ -83,7 +84,8 @@ class ClipboardManager(QObject):
 
     def copy_to_clipboard(self, item: ClipboardItem) -> None:
         """Write an item back to system clipboard."""
-        self._ignore_next = True
+        with self._lock:
+            self._ignore_next = True
         if item.content_type == ContentType.TEXT and item.content_text:
             set_clipboard_text(item.content_text)
         elif item.content_type == ContentType.FILES and item.content_text:
@@ -272,6 +274,8 @@ class ClipboardManager(QObject):
             for tag in all_tags[:10]:
                 if tag.id:
                     self.db.add_item_tag(new_id, tag.id)
+            # Delete source items after successful merge
+            self.db.delete_items_batch(item_ids)
             self._notify()
             return True
         return False
@@ -326,11 +330,9 @@ class ClipboardManager(QObject):
 
     def copy_item(self, item_id: int) -> None:
         """Copy item to clipboard by id (compat with ApiClient interface)."""
-        items = self.db.get_items(limit=200, offset=0)
-        for item in items:
-            if item.id == item_id:
-                self.copy_to_clipboard(item)
-                return
+        item = self.db.get_item_by_id(item_id)
+        if item:
+            self.copy_to_clipboard(item)
 
     def paste_from_clipboard(self) -> bool:
         """Read current clipboard and add as new item. Returns True if added."""
@@ -351,16 +353,18 @@ class ClipboardManager(QObject):
                             group_id: Optional[int] = None,
                             category: Optional[str] = None,
                             project: Optional[str] = None,
+                            sort_mode: str = "newest",
                             limit: int = 50) -> list[ClipboardItem]:
-        return self.db.search_with_filters(query, tag_ids, group_id, category, project, limit)
+        return self.db.search_with_filters(query, tag_ids, group_id, category, project, sort_mode, limit)
 
     # ── 内部方法 ──
 
     def _on_clipboard_change(self) -> None:
         """Called by listener on each clipboard change."""
-        if self._ignore_next:
-            self._ignore_next = False
-            return
+        with self._lock:
+            if self._ignore_next:
+                self._ignore_next = False
+                return
 
         try:
             item = self._read_clipboard()

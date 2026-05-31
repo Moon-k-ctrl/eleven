@@ -1,4 +1,4 @@
-"""Export dialog for batch export of selected clipboard items."""
+"""Export dialog for batch export of selected clipboard items — ink-wash theme."""
 from __future__ import annotations
 
 import os
@@ -11,12 +11,16 @@ from PyQt6.QtWidgets import (
 )
 
 from src.models.clipboard_item import ClipboardItem, ContentType
+from src.ui.theme_styles import (
+    DIALOG_STYLE, btn_primary, btn_secondary,
+    TEXT_PRIMARY, TEXT_TERTIARY,
+)
 
 
 class ExportDialog(QDialog):
     """Multi-select export method chooser."""
 
-    PREVIEW_MODE = "preview"  # sentinel for "send to preview bar"
+    PREVIEW_MODE = "preview"
 
     def __init__(self, items: list[ClipboardItem], parent=None):
         super().__init__(parent)
@@ -24,6 +28,7 @@ class ExportDialog(QDialog):
         self._result_key: str | None = None
         self.setWindowTitle(f"导出 {len(items)} 项内容")
         self.setFixedSize(420, 320)
+        self.setStyleSheet(DIALOG_STYLE)
         self._setup_ui()
 
     def _detect_default_option(self) -> str:
@@ -38,8 +43,12 @@ class ExportDialog(QDialog):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setSpacing(8)
 
-        layout.addWidget(QLabel(f"选择导出方式（共 {len(self._items)} 项）："))
+        # Title
+        title = QLabel(f"📤  选择导出方式（共 {len(self._items)} 项）")
+        title.setStyleSheet(f"color: {TEXT_PRIMARY}; font-size: 14px; font-weight: bold; font-family: 'Microsoft YaHei';")
+        layout.addWidget(title)
 
         self._group = QButtonGroup(self)
         default_key = self._detect_default_option()
@@ -58,12 +67,16 @@ class ExportDialog(QDialog):
             if key == default_key:
                 rb.setChecked(True)
 
+        layout.addStretch()
+
         btns = QHBoxLayout()
         btns.addStretch()
         cancel = QPushButton("取消")
+        cancel.setStyleSheet(btn_secondary())
         cancel.clicked.connect(self.reject)
         btns.addWidget(cancel)
-        ok = QPushButton("确定")
+        ok = QPushButton("确定导出")
+        ok.setStyleSheet(btn_primary())
         ok.clicked.connect(self._do_export)
         btns.addWidget(ok)
         layout.addLayout(btns)

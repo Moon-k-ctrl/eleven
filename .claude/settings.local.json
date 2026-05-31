@@ -14,7 +14,31 @@
       "Bash(python -c \"from PyQt6.QtQuickWidgets import QQuickWidget; print\\('QtQuickWidgets available'\\)\")",
       "Bash(python -c \"from PyQt6.QtQuick import QQuickView; from PyQt6.QtQml import QQmlApplicationEngine; print\\('QtQuick and QtQml available'\\)\")",
       "Bash(python -c \"import PyQt6; print\\(f'PyQt6 version: {PyQt6.QtCore.PYQT_VERSION_STR}'\\); from PyQt6.QtQuickWidgets import QQuickWidget; print\\('QQuickWidget available'\\)\")",
-      "Bash(timeout 12 python -m src.app)"
+      "Bash(timeout 12 python -m src.app)",
+      "WebSearch",
+      "Bash(git clone *)",
+      "WebFetch(domain:www.zhihu.com)",
+      "Bash(ls /tmp/open-design-clone/skills/ 2>/dev/null | head -5 && echo \"---exists---\" || echo \"---not found---\")",
+      "Bash(rm -rf /tmp/open-design-clone && git clone --depth 1 --filter=blob:none --sparse https://github.com/nexu-io/open-design.git /tmp/open-design-clone 2>&1)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(pip install *)",
+      "Bash(mkdir -p /tmp/open-design-skills)",
+      "Bash(gh api *)",
+      "Bash(tar xz *)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(python -m pytest tests/ -v --timeout=30)",
+      "Bash(rm -rf open-design-skills)",
+      "Bash(curl -sL https://api.github.com/repos/nexu-io/open-design/tarball/main)",
+      "Bash(python -m pytest tests/ -v --timeout=30 --ignore=tests/test_manager.py)",
+      "Bash(where python *)",
+      "Bash(python -c \"import PIL; print\\('PIL OK'\\)\")",
+      "Bash(python -m pytest tests/test_database.py tests/test_clipboard_item.py tests/test_config.py tests/test_tags.py tests/test_utils.py -v)",
+      "Bash(python -m pytest tests/ -v --timeout=30 --ignore=tests/test_manager.py --ignore=tests/test_api.py)",
+      "Bash(start \"\" \"G:\\\\AI\\\\app\\\\zhongzhuan\\\\zhongzhuan\\\\docs\\\\staging-sidebar-preview.html\")",
+      "Bash(grep -v '\\\\.md$')",
+      "Bash(ls ~/.claude/skills/ | grep -v '\\\\.md$' | tail -20)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('src/ui/preview_bar.py', encoding='utf-8'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(python -m pytest tests/test_database.py tests/test_tags.py tests/test_config.py tests/test_utils.py tests/test_clipboard_item.py -v --timeout=30)"
     ]
   }
 }

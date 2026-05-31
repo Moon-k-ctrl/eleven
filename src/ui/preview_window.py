@@ -1,4 +1,4 @@
-"""Standalone preview window for clipboard item content."""
+"""Standalone preview window for clipboard item content — ink-wash theme."""
 from __future__ import annotations
 
 import logging
@@ -18,31 +18,39 @@ from PyQt6.QtWidgets import (
 )
 
 from src.models.clipboard_item import ClipboardItem, ContentType
+from src.ui.theme_styles import (
+    BG_PRIMARY, BG_SECONDARY, BG_TERTIARY, BG_HOVER,
+    TEXT_PRIMARY, TEXT_SECONDARY, TEXT_TERTIARY,
+    ACCENT_MINT, ACCENT_CYAN, BORDER_SOFT,
+    btn_primary, btn_secondary, btn_danger,
+)
 
 logger = logging.getLogger("eleven.preview")
 
 
-PREVIEW_STYLE = """
-QWidget {
-    background: #121212;
-    color: #e0e0e0;
-}
-QPushButton {
-    background: #2a2a2a;
-    border: none;
-    border-radius: 4px;
+PREVIEW_STYLE = f"""
+QWidget {{
+    background: {BG_PRIMARY};
+    color: {TEXT_PRIMARY};
+    font-family: "Microsoft YaHei", "Segoe UI";
+}}
+QPushButton {{
+    background: rgba(255,255,255,0.045);
+    border: 1px solid {BORDER_SOFT};
+    border-radius: 6px;
     padding: 6px 12px;
-    color: #ccc;
+    color: {TEXT_SECONDARY};
     font-size: 12px;
-}
-QPushButton:hover {
-    background: #3a3a3a;
-    color: white;
-}
-QLabel {
-    color: #aaa;
+}}
+QPushButton:hover {{
+    background: {BG_HOVER};
+    border-color: rgba(124, 224, 195, 0.3);
+    color: {TEXT_PRIMARY};
+}}
+QLabel {{
+    color: {TEXT_TERTIARY};
     font-size: 12px;
-}
+}}
 """
 
 

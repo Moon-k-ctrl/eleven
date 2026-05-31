@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾遗 - UI Components Design System</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     DESIGN SYSTEM TOKENS
+     ═══════════════════════════════════════════════════════════ */
+  :root {
+    /* Background */
+    --bg-primary: #080B0F;
+    --bg-secondary: #10161C;
+    --bg-tertiary: #172029;
+    --bg-hover: #24313B;
+    --bg-active: #2E4050;
+    --bg-panel: #0C1116;
+    --bg-panel-header: #071016;
+
+    /* Surface */
+    --surface-0: rgba(8,11,15,0.98);
+    --surface-1: rgba(16,22,28,0.92);
+    --surface-2: rgba(24,33,41,0.86);
+
+    /* Text */
+    --text-primary: #F0F5F2;
+    --text-secondary: #A8B3BD;
+    --text-tertiary: #71808F;
+    --text-placeholder: #4A5568;
+    --text-inverse: #06100D;
+
+    /* Accent */
+    --accent-mint: #7CE0C3;
+    --accent-cyan: #66B8C7;
+    --accent-gold: #F2B84B;
+    --accent-green: #54D49E;
+
+    /* Status */
+    --status-online: #1FB84F;
+    --status-warning: #F2B84B;
+    --status-error: #F06464;
+    --status-offline: #71808F;
+
+    /* Semantic */
+    --error: #F06464;
+    --success: #238636;
+
+    /* Border */
+    --border-soft: rgba(20,225,238,0.9);
+    --border-strong: rgba(41,225,238,0.9);
+    --line-soft: #14E1EEE7;
+    --line-strong: #29E1EEE7;
+
+    /* Type */
+    --type-text: #9FCBFF;
+    --type-image: #7CE0C3;
+    --type-word: #9EDDE8;
+    --type-excel: #54D49E;
+    --type-pdf: #FF9A9A;
+    --type-ppt: #FFD98A;
+    --type-archive: #A8B3BD;
+
+    /* Shadows */
+    --shadow: #61000000;
+    --shadow-soft: 0 18px 54px rgba(0,0,0,0.38);
+    --shadow-pop: 0 12px 28px rgba(84,212,158,0.18);
+
+    /* Spacing */
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 12px;
+    --sp-lg: 16px;
+    --sp-xl: 24px;
+    --sp-xxl: 32px;
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-full: 9999px;
+
+    /* Font */
+    --font-primary: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    --font-secondary: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RESET & BASE
+     ═══════════════════════════════════════════════════════════ */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-primary);
+    background: #05070A;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 16px;
+  }
+  .page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent-mint);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    font-family: var(--font-secondary);
+  }
+
+  .grid {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 32px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     COMPONENT FRAME
+     ═══════════════════════════════════════════════════════════ */
+  .comp-frame {
+    background: var(--bg-secondary);
+    border: 1px solid #1A2230;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .comp-frame-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #1A2230;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .comp-frame-header .num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-mint);
+    background: rgba(124,224,195,0.1);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-secondary);
+  }
+  .comp-frame-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .comp-frame-header h2 span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-left: 6px;
+  }
+  .comp-frame-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .comp-frame-body.panel-width {
+    max-width: 430px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .state-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .state-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--font-secondary);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     1. TITLEBAR
+     ═══════════════════════════════════════════════════════════ */
+  .titlebar {
+    background: var(--bg-panel-header);
+    border-radius: var(--radius-md);
+    border: 1px solid #1A2230;
+    overflow: hidden;
+    width: 430px;
+  }
+  .titlebar-header {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-md);
+    gap: 8px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .titlebar-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-online);
+    flex-shrink: 0;
+  }
+  .titlebar-status-dot.warning { background: var(--status-warning); }
+  .titlebar-status-dot.error { background: var(--status-error); }
+  .titlebar-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .titlebar-capacity {
+    font-size: 10px;
+    font-weight: 500;
+    color: #6E8A9A;
+    font-family: var(--font-secondary);
+  }
+  .titlebar-spacer { flex: 1; }
+  .titlebar-ctrl {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8FB2C2;
+    font-size: 15px;
+    font-family: var(--font-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 120ms ease;
+  }
+  .titlebar-ctrl:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .titlebar-toolbar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 5px var(--sp-md);
+    gap: 8px;
+    background: rgba(10,14,22,0.94);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SHIYI BUTTON (reusable)
+     ═══════════════════════════════════════════════════════════ */
+  .sy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 var(--sp-md);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    border: 1px solid var(--line-soft);
+    background: rgba(255,255,255,0.045);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 120ms ease;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .sy-btn:hover {
+    background: rgba(124,224,195,0.10);
+    border-color: rgba(124,224,195,0.32);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+  .sy-btn .icon {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  /* Primary variant */
+  .sy-btn.primary {
+    background: linear-gradient(180deg, var(--accent-mint), #69C9DC);
+    border-color: rgba(124,224,195,0.72);
+    color: var(--text-inverse);
+    font-weight: 700;
+  }
+  .sy-btn.primary:hover {
+    background: linear-gradient(180deg, #8AEAD0, #72CEDF);
+    border-color: var(--accent-mint);
+    color: var(--text-inverse);
+  }
+
+  /* Danger variant */
+  .sy-btn.danger {
+    color: var(--text-secondary);
+  }
+  .sy-btn.danger:hover {
+    background: rgba(240,100,100,0.10);
+    border-color: rgba(240,100,100,0.32);
+    color: var(--error);
+  }
+
+  /* Compact 24px variant */
+  .sy-btn.compact {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+    border-radius: var(--radius-sm);
+    gap: 4px;
+  }
+  .sy-btn.compact .icon {
+    font-size: 11px;
+  }
+
+  /* Disabled */
+  .sy-btn:disabled, .sy-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none !important;
+    pointer-events: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     2. TAG BAR
+     ═══════════════════════════════════════════════════════════ */
+  .tagbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    width: 430px;
+  }
+  .tagbar::-webkit-scrollbar { display: none; }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 120ms ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+  }
+  .tag-chip .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Inactive tags */
+  .tag-chip.inactive {
+    border-color: var(--line-soft);
+    background: transparent;
+    color: var(--text-tertiary);
+  }
+  .tag-chip.inactive .dot { opacity: 0.5; }
+  .tag-chip.inactive:hover {
+    border-color: rgba(124,224,195,0.32);
+    color: var(--text-secondary);
+    background: rgba(124,224,195,0.06);
+  }
+
+  /* Active tags */
+  .tag-chip.active {
+    background: rgba(124,224,195,0.15);
+    border-color: rgba(124,224,195,0.40);
+    color: var(--accent-mint);
+  }
+  .tag-chip.active .dot { opacity: 1; }
+
+  /* Color variants (inactive) */
+  .tag-chip.inactive.cyan { color: #6E9AA8; }
+  .tag-chip.inactive.cyan:hover { border-color: rgba(102,184,199,0.4); background: rgba(102,184,199,0.06); }
+  .tag-chip.inactive.gold { color: #A89060; }
+  .tag-chip.inactive.gold:hover { border-color: rgba(242,184,75,0.4); background: rgba(242,184,75,0.06); }
+  .tag-chip.inactive.green { color: #5A9E80; }
+  .tag-chip.inactive.green:hover { border-color: rgba(84,212,158,0.4); background: rgba(84,212,158,0.06); }
+  .tag-chip.inactive.pdf { color: #A87070; }
+  .tag-chip.inactive.pdf:hover { border-color: rgba(255,154,154,0.4); background: rgba(255,154,154,0.06); }
+
+  /* Add tag button */
+  .tag-add {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px dashed var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-placeholder);
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 120ms ease;
+  }
+  .tag-add:hover {
+    border-color: var(--accent-mint);
+    color: var(--accent-mint);
+    background: rgba(124,224,195,0.08);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     3. ACTION BAR (multi-select)
+     ═══════════════════════════════════════════════════════════ */
+  .actionbar {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 var(--sp-md);
+    background: linear-gradient(90deg, rgba(124,224,195,0.12), rgba(124,224,195,0.04));
+    border: 1px solid rgba(124,224,195,0.18);
+    border-radius: var(--radius-sm);
+    gap: 12px;
+    width: 430px;
+  }
+  .actionbar-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-mint);
+    white-space: nowrap;
+  }
+  .actionbar-spacer { flex: 1; }
+  .actionbar-btns {
+    display: flex;
+    gap: 6px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     5. CATEGORY BUTTONS
+     ═══════════════════════════════════════════════════════════ */
+  .cat-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 120ms ease;
+    border: 1px solid var(--line-soft);
+    background: transparent;
+    color: var(--text-tertiary);
+  }
+  .cat-pill:hover {
+    border-color: rgba(124,224,195,0.32);
+    color: var(--text-secondary);
+    background: rgba(124,224,195,0.06);
+  }
+  .cat-pill.active {
+    background: var(--accent-mint);
+    border-color: var(--accent-mint);
+    color: var(--text-inverse);
+    font-weight: 700;
+  }
+  .cat-pill.active:hover {
+    background: #69D4B8;
+  }
+  .cat-pill .cat-icon { font-size: 12px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     6. STAGING SHELF
+     ═══════════════════════════════════════════════════════════ */
+  .staging-shelf {
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    background: rgba(10,255,255,0.04);
+    width: 430px;
+  }
+  .staging-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: var(--sp-sm);
+    height: 28px;
+  }
+  .staging-header .shelf-icon { font-size: 12px; }
+  .staging-header .shelf-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .staging-header .shelf-count {
+    font-size: 10px;
+    font-family: var(--font-secondary);
+    color: var(--text-placeholder);
+  }
+  .staging-header .shelf-spacer { flex: 1; }
+  .staging-header-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 120ms ease;
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+  .staging-header-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+  .staging-header-btn.danger:hover {
+    background: rgba(240,100,100,0.15);
+    color: var(--error);
+  }
+
+  .staging-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    padding: 0 var(--sp-sm) var(--sp-sm);
+  }
+  .staging-card {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    border: 1px solid #1A2230;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 120ms ease;
+    position: relative;
+    overflow: hidden;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    gap: 2px;
+    background: var(--bg-tertiary);
+  }
+  .staging-card .card-icon { font-size: 18px; }
+  .staging-card .card-label {
+    font-size: 8px;
+    max-width: 90%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .staging-card:hover {
+    border-color: var(--accent-mint);
+    background: var(--bg-hover);
+  }
+  .staging-card.image-thumb {
+    background: linear-gradient(135deg, #122822, var(--bg-tertiary));
+  }
+  .staging-card.image-thumb .card-icon { font-size: 14px; }
+
+  /* Card hover overlay */
+  .staging-card .hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8,11,15,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .staging-card.show-overlay .hover-overlay {
+    opacity: 1;
+  }
+  .overlay-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .overlay-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .overlay-btn.copy-btn {
+    background: rgba(124,224,195,0.2);
+    color: var(--accent-mint);
+  }
+  .overlay-btn.copy-btn:hover {
+    background: rgba(124,224,195,0.35);
+  }
+  .overlay-btn.remove-btn {
+    background: rgba(240,100,100,0.2);
+    color: var(--error);
+  }
+  .overlay-btn.remove-btn:hover {
+    background: rgba(240,100,100,0.35);
+  }
+
+  .staging-card.empty-card {
+    border-style: dashed;
+    border-color: #2A3A4A;
+    color: #2A3A4A;
+    font-size: 16px;
+  }
+  .staging-card.empty-card:hover {
+    border-color: var(--accent-mint);
+    color: var(--accent-mint);
+    background: rgba(124,224,195,0.06);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     7. DROP OVERLAY
+     ═══════════════════════════════════════════════════════════ */
+  .drop-overlay-demo {
+    position: relative;
+    width: 430px;
+    height: 200px;
+    background: var(--bg-panel);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(12,17,22,0.92);
+    border: 2px dashed var(--accent-mint);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .drop-overlay .drop-icon {
+    font-size: 36px;
+    animation: dropPulse 2s ease-in-out infinite;
+  }
+  .drop-overlay .drop-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-mint);
+  }
+  .drop-overlay .drop-subtext {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  @keyframes dropPulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     8. FLOATING BALL
+     ═══════════════════════════════════════════════════════════ */
+  .float-ball-container {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    padding: 24px;
+  }
+  .float-ball {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan));
+    position: relative;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow:
+      0 4px 16px rgba(124,224,195,0.30),
+      0 2px 6px rgba(0,0,0,0.3);
+  }
+  /* Jade specular highlight */
+  .float-ball::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    width: 20px;
+    height: 12px;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.45) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .float-ball .ball-emoji {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .float-ball .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--error);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid var(--bg-primary);
+  }
+  .float-ball .status-dot {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--status-online);
+    border: 2px solid var(--bg-primary);
+  }
+
+  .float-ball:hover {
+    transform: scale(1.08);
+    box-shadow:
+      0 6px 24px rgba(124,224,195,0.45),
+      0 2px 8px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #8AEAD0, #72CEDF);
+  }
+
+  .ball-state-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-align: center;
+    font-family: var(--font-secondary);
+  }
+  .ball-state-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     9. PREVIEW BAR (expanded)
+     ═══════════════════════════════════════════════════════════ */
+  .preview-bar {
+    width: 300px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+  .preview-bar-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-md);
+    background: var(--bg-panel-header);
+    border-bottom: 1px solid var(--line-soft);
+    gap: 8px;
+  }
+  .preview-bar-header .pb-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex: 1;
+  }
+  .preview-bar-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+    border-bottom: 1px solid #141C24;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .preview-bar-item:hover {
+    background: var(--bg-hover);
+  }
+  .preview-bar-item .thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 1px solid #1A2230;
+  }
+  .preview-bar-item .thumb.img-thumb {
+    background: linear-gradient(135deg, #122822, var(--bg-tertiary));
+  }
+  .preview-bar-item .item-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .preview-bar-item .item-text {
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+  .preview-bar-item .item-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .preview-bar-item .item-time {
+    font-size: 9px;
+    color: var(--text-placeholder);
+    font-family: var(--font-secondary);
+  }
+  .preview-bar-item .item-type-icon {
+    font-size: 10px;
+  }
+  .preview-bar-item .item-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .preview-bar-item:hover .item-actions {
+    opacity: 1;
+  }
+  .preview-bar-item .act-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all 120ms ease;
+  }
+  .preview-bar-item .act-btn:hover {
+    background: rgba(124,224,195,0.15);
+    color: var(--accent-mint);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     10. TAG DIALOG
+     ═══════════════════════════════════════════════════════════ */
+  .modal-backdrop {
+    position: relative;
+    background: rgba(5,7,10,0.8);
+    border-radius: var(--radius-md);
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .dialog {
+    width: 380px;
+    background: var(--bg-secondary);
+    border: 1px solid #1A2230;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .dialog-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #1A2230;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dialog-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .dialog-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 120ms ease;
+  }
+  .dialog-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+  .dialog-body {
+    padding: 12px 20px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .dialog-body::-webkit-scrollbar { width: 4px; }
+  .dialog-body::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+
+  .tag-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .tag-row:hover {
+    background: var(--bg-hover);
+  }
+  .tag-row .color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tag-row .tag-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+  .tag-row .tag-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .tag-row:hover .tag-actions {
+    opacity: 1;
+  }
+  .tag-row .tag-act {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .tag-row .tag-act:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+  }
+  .tag-row .tag-act.delete:hover {
+    background: rgba(240,100,100,0.15);
+    color: var(--error);
+  }
+
+  .dialog-footer {
+    padding: 12px 20px 16px;
+    border-top: 1px solid #1A2230;
+  }
+  .new-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .color-picker {
+    display: flex;
+    gap: 6px;
+  }
+  .color-pick {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 120ms ease;
+  }
+  .color-pick:hover {
+    transform: scale(1.15);
+  }
+  .color-pick.selected {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 2px var(--bg-secondary);
+  }
+  .tag-input {
+    flex: 1;
+    height: 32px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    padding: 0 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    outline: none;
+  }
+  .tag-input::placeholder {
+    color: var(--text-placeholder);
+  }
+  .tag-input:focus {
+    border-color: var(--accent-mint);
+  }
+  .tag-save-btn {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(180deg, var(--accent-mint), #69C9DC);
+    border: none;
+    color: var(--text-inverse);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .tag-save-btn:hover {
+    background: linear-gradient(180deg, #8AEAD0, #72CEDF);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     11. EXPORT DIALOG
+     ═══════════════════════════════════════════════════════════ */
+  .export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .radio-option:hover {
+    background: var(--bg-hover);
+  }
+  .radio-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--line-soft);
+    position: relative;
+    transition: all 120ms ease;
+    flex-shrink: 0;
+  }
+  .radio-option.selected .radio-dot {
+    border-color: var(--accent-mint);
+  }
+  .radio-option.selected .radio-dot::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-mint);
+  }
+  .radio-label {
+    font-size: 12px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .radio-desc {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+  }
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1.5px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 120ms ease;
+    flex-shrink: 0;
+  }
+  .checkbox.checked {
+    background: var(--accent-mint);
+    border-color: var(--accent-mint);
+  }
+  .checkbox.checked::after {
+    content: '✓';
+    font-size: 10px;
+    color: var(--text-inverse);
+    font-weight: 700;
+  }
+  .checkbox-label {
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  .filepath-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid #1A2230;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+  }
+  .filepath-preview .fp-icon { font-size: 14px; }
+  .filepath-preview .fp-text {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-family: var(--font-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .filepath-preview .fp-browse {
+    font-size: 11px;
+    color: var(--accent-mint);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .dialog-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 20px 16px;
+    border-top: 1px solid #1A2230;
+  }
+  .dialog-actions .cancel-btn {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--line-soft);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .dialog-actions .cancel-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-primary);
+  }
+  .dialog-actions .confirm-btn {
+    height: 32px;
+    padding: 0 20px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(180deg, var(--accent-mint), #69C9DC);
+    border: none;
+    color: var(--text-inverse);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .dialog-actions .confirm-btn:hover {
+    background: linear-gradient(180deg, #8AEAD0, #72CEDF);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     12. TRAY MENU
+     ═══════════════════════════════════════════════════════════ */
+  .tray-menu {
+    width: 240px;
+    background: var(--bg-secondary);
+    border: 1px solid #1A2230;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    padding: 4px;
+  }
+  .tray-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms ease;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+  .tray-item:hover {
+    background: var(--bg-hover);
+  }
+  .tray-item .tray-icon { font-size: 14px; width: 20px; text-align: center; }
+  .tray-item .tray-label { flex: 1; }
+  .tray-item .tray-shortcut {
+    font-size: 10px;
+    color: var(--text-placeholder);
+    font-family: var(--font-secondary);
+  }
+
+  .tray-separator {
+    height: 1px;
+    background: #1A2230;
+    margin: 4px 8px;
+  }
+
+  /* Toggle row */
+  .tray-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 120ms ease;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+  .tray-toggle:hover { background: var(--bg-hover); }
+  .toggle-switch {
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--bg-active);
+    position: relative;
+    transition: background 200ms ease;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .toggle-switch.on {
+    background: var(--accent-mint);
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 200ms ease;
+  }
+  .toggle-switch.on::after {
+    transform: translateX(14px);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     13. NOTIFICATION TOAST
+     ═══════════════════════════════════════════════════════════ */
+  .toast-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 320px;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid #1A2230;
+    position: relative;
+    overflow: hidden;
+    animation: toastSlideIn 300ms ease;
+  }
+  @keyframes toastSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .toast .toast-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+  }
+  .toast.success .toast-accent { background: var(--accent-mint); }
+  .toast.warning .toast-accent { background: var(--accent-gold); }
+  .toast.error .toast-accent { background: var(--error); }
+
+  .toast .toast-icon { font-size: 16px; }
+  .toast .toast-msg {
+    font-size: 12px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .toast .toast-close {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .toast .toast-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+
+  /* Auto-dismiss bar */
+  .toast .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent-mint);
+    border-radius: 0 1px 0 0;
+    animation: toastProgress 3s linear forwards;
+  }
+  .toast.warning .toast-progress { background: var(--accent-gold); }
+  .toast.error .toast-progress { background: var(--error); }
+  @keyframes toastProgress {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     14. PREVIEW WINDOW
+     ═══════════════════════════════════════════════════════════ */
+  .preview-window {
+    width: 430px;
+    background: var(--bg-panel);
+    border: 1px solid #1A2230;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+  .pw-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-md);
+    background: var(--bg-panel-header);
+    border-bottom: 1px solid var(--line-soft);
+    gap: 8px;
+  }
+  .pw-header .pw-icon { font-size: 14px; }
+  .pw-header .pw-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .pw-header .pw-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 120ms ease;
+  }
+  .pw-header .pw-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+
+  .pw-content {
+    padding: var(--sp-md);
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .pw-content::-webkit-scrollbar { width: 4px; }
+  .pw-content::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+
+  /* Text preview with line numbers */
+  .code-preview {
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .code-preview .line {
+    display: flex;
+    gap: 12px;
+  }
+  .code-preview .line-num {
+    color: var(--text-placeholder);
+    min-width: 20px;
+    text-align: right;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .code-preview .line-content {
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .code-preview .kw { color: var(--accent-cyan); }
+  .code-preview .str { color: var(--accent-mint); }
+  .code-preview .num { color: var(--accent-gold); }
+
+  /* Image preview */
+  .img-preview {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #0F1923, #172029);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .pw-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px var(--sp-md);
+    border-top: 1px solid #1A2230;
+    background: rgba(7,16,22,0.6);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SEPARATOR
+     ═══════════════════════════════════════════════════════════ */
+  .sep {
+    height: 1px;
+    background: #1A2230;
+    margin: 4px 0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     FULL-WIDTH FRAME
+     ═══════════════════════════════════════════════════════════ */
+  .full-width { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <h1>拾 遗</h1>
+  <p>UI Components Design System &mdash; Ink Wash Dark Theme</p>
+</div>
+
+<div class="grid">
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. TITLEBAR
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">01</span>
+    <h2>TitleBar <span>标题栏</span></h2>
+  </div>
+  <div class="comp-frame-body panel-width">
+    <!-- Default state -->
+    <div class="state-row">
+      <span class="state-label">Default / Normal</span>
+      <div class="titlebar">
+        <div class="titlebar-header">
+          <div class="titlebar-status-dot"></div>
+          <span class="titlebar-title">拾遗</span>
+          <span class="titlebar-capacity">150/200</span>
+          <div class="titlebar-spacer"></div>
+          <div class="titlebar-ctrl">&minus;</div>
+          <div class="titlebar-ctrl">&times;</div>
+        </div>
+        <div class="titlebar-toolbar">
+          <button class="sy-btn"><span class="icon">&#x29C9;</span> 合并</button>
+          <button class="sy-btn primary"><span class="icon">&#x25E8;</span> 预览栏</button>
+          <button class="sy-btn"><span class="icon">&#x26A1;</span> 短语</button>
+          <button class="sy-btn"><span class="icon">&#x21E3;</span> 导出</button>
+          <button class="sy-btn"><span class="icon">&#x1F5D1;&#xFE0F;</span> 回收站</button>
+          <button class="sy-btn danger"><span class="icon">&times;</span> 清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hover state on toolbar button -->
+    <div class="state-row">
+      <span class="state-label">Hover on "导出" button</span>
+      <div class="titlebar">
+        <div class="titlebar-header">
+          <div class="titlebar-status-dot"></div>
+          <span class="titlebar-title">拾遗</span>
+          <span class="titlebar-capacity">150/200</span>
+          <div class="titlebar-spacer"></div>
+          <div class="titlebar-ctrl">&minus;</div>
+          <div class="titlebar-ctrl">&times;</div>
+        </div>
+        <div class="titlebar-toolbar">
+          <button class="sy-btn"><span class="icon">&#x29C9;</span> 合并</button>
+          <button class="sy-btn primary"><span class="icon">&#x25E8;</span> 预览栏</button>
+          <button class="sy-btn"><span class="icon">&#x26A1;</span> 短语</button>
+          <button class="sy-btn" style="background:rgba(124,224,195,0.10);border-color:rgba(124,224,195,0.32);color:var(--text-primary);transform:translateY(-1px);"><span class="icon">&#x21E3;</span> 导出</button>
+          <button class="sy-btn"><span class="icon">&#x1F5D1;&#xFE0F;</span> 回收站</button>
+          <button class="sy-btn danger"><span class="icon">&times;</span> 清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning/Error status dot -->
+    <div class="state-row">
+      <span class="state-label">Status: Warning / Error</span>
+      <div class="titlebar" style="width:200px;margin:0 auto;">
+        <div class="titlebar-header" style="justify-content:center;gap:20px;">
+          <div style="display:flex;align-items:center;gap:6px;"><div class="titlebar-status-dot"></div><span class="titlebar-capacity">正常</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div class="titlebar-status-dot warning"></div><span class="titlebar-capacity">警告</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div class="titlebar-status-dot error"></div><span class="titlebar-capacity">错误</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. TAG BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">02</span>
+    <h2>TagBar <span>标签栏</span></h2>
+  </div>
+  <div class="comp-frame-body panel-width">
+    <div class="state-row">
+      <span class="state-label">Tags with active/inactive states</span>
+      <div class="tagbar">
+        <div class="tag-chip active"><span class="dot" style="background:var(--accent-mint);"></span>工作</div>
+        <div class="tag-chip inactive"><span class="dot" style="background:var(--accent-cyan);"></span>学习笔记</div>
+        <div class="tag-chip inactive cyan"><span class="dot" style="background:var(--accent-cyan);"></span>代码片段</div>
+        <div class="tag-chip inactive gold"><span class="dot" style="background:var(--accent-gold);"></span>重要</div>
+        <div class="tag-chip inactive green"><span class="dot" style="background:var(--accent-green);"></span>创意</div>
+        <div class="tag-chip inactive"><span class="dot" style="background:var(--accent-mint);"></span>临时</div>
+        <div class="tag-chip active" style="background:rgba(242,184,75,0.15);border-color:rgba(242,184,75,0.40);color:var(--accent-gold);"><span class="dot" style="background:var(--accent-gold);opacity:1;"></span>收藏</div>
+        <div class="tag-chip inactive pdf"><span class="dot" style="background:var(--type-pdf);"></span>文档</div>
+        <div class="tag-chip inactive"><span class="dot" style="background:var(--type-word);"></span>需求</div>
+        <div class="tag-add">+</div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <span class="state-label">Hover state on "学习笔记"</span>
+      <div class="tagbar">
+        <div class="tag-chip active"><span class="dot" style="background:var(--accent-mint);"></span>工作</div>
+        <div class="tag-chip inactive" style="border-color:rgba(102,184,199,0.4);background:rgba(102,184,199,0.06);color:var(--text-secondary);"><span class="dot" style="background:var(--accent-cyan);"></span>学习笔记</div>
+        <div class="tag-chip inactive cyan"><span class="dot" style="background:var(--accent-cyan);"></span>代码片段</div>
+        <div class="tag-chip inactive gold"><span class="dot" style="background:var(--accent-gold);"></span>重要</div>
+        <div class="tag-chip inactive green"><span class="dot" style="background:var(--accent-green);"></span>创意</div>
+        <div class="tag-chip inactive"><span class="dot" style="background:var(--accent-mint);"></span>临时</div>
+        <div class="tag-add">+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. ACTION BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">03</span>
+    <h2>ActionBar <span>多选操作栏</span></h2>
+  </div>
+  <div class="comp-frame-body panel-width">
+    <div class="state-row">
+      <span class="state-label">Multi-select active</span>
+      <div class="actionbar">
+        <span class="actionbar-count">已选 3 项</span>
+        <div class="actionbar-spacer"></div>
+        <div class="actionbar-btns">
+          <button class="sy-btn compact">全选</button>
+          <button class="sy-btn compact"><span class="icon">&#x21E3;</span> 导出</button>
+          <button class="sy-btn compact danger"><span class="icon">&#x1F5D1;&#xFE0F;</span> 删除</button>
+          <button class="sy-btn compact">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <span class="state-label">Delete button hover</span>
+      <div class="actionbar">
+        <span class="actionbar-count">已选 5 项</span>
+        <div class="actionbar-spacer"></div>
+        <div class="actionbar-btns">
+          <button class="sy-btn compact">全选</button>
+          <button class="sy-btn compact"><span class="icon">&#x21E3;</span> 导出</button>
+          <button class="sy-btn compact danger" style="background:rgba(240,100,100,0.10);border-color:rgba(240,100,100,0.32);color:var(--error);"><span class="icon">&#x1F5D1;&#xFE0F;</span> 删除</button>
+          <button class="sy-btn compact">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. SHIYI BUTTON (all variants)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">04</span>
+    <h2>ShiyiButton <span>通用按钮</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Default (border-only)</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn"><span class="icon">&#x29C9;</span> 合并</button>
+        <button class="sy-btn"><span class="icon">&#x21E3;</span> 导出</button>
+        <button class="sy-btn"><span class="icon">&#x26A1;</span> 短语</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Default hover</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn" style="background:rgba(124,224,195,0.10);border-color:rgba(124,224,195,0.32);color:var(--text-primary);transform:translateY(-1px);"><span class="icon">&#x29C9;</span> 合并</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Primary (mint gradient)</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn primary"><span class="icon">&#x25E8;</span> 预览栏</button>
+        <button class="sy-btn primary">确认</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Primary hover</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn primary" style="background:linear-gradient(180deg,#8AEAD0,#72CEDF);border-color:var(--accent-mint);"><span class="icon">&#x25E8;</span> 预览栏</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Danger</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn danger"><span class="icon">&times;</span> 清空</button>
+        <button class="sy-btn danger"><span class="icon">&#x1F5D1;&#xFE0F;</span> 删除</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Danger hover</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn danger" style="background:rgba(240,100,100,0.10);border-color:rgba(240,100,100,0.32);color:var(--error);"><span class="icon">&times;</span> 清空</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Disabled</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="sy-btn disabled"><span class="icon">&#x29C9;</span> 合并</button>
+        <button class="sy-btn primary disabled">确认</button>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Compact (24px height)</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="sy-btn compact"><span class="icon">&#x1F4CB;</span> 复制</button>
+        <button class="sy-btn compact"><span class="icon">&#x1F4CC;</span> 固定</button>
+        <button class="sy-btn compact primary" style="background:linear-gradient(180deg,var(--accent-mint),#69C9DC);border-color:rgba(124,224,195,0.72);color:var(--text-inverse);font-weight:700;">确认</button>
+        <button class="sy-btn compact danger"><span class="icon">&#x1F5D1;&#xFE0F;</span> 删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. CATEGORY BUTTONS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">05</span>
+    <h2>CategoryButton <span>分类筛选按钮</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Category group</span>
+      <div class="cat-bar">
+        <div class="cat-pill active"><span class="cat-icon">&#x1F4CB;</span> 全部</div>
+        <div class="cat-pill"><span class="cat-icon">&#x1F4DD;</span> 文本</div>
+        <div class="cat-pill"><span class="cat-icon">&#x1F5BC;&#xFE0F;</span> 图片</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-word);">W</span> Word</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-excel);">X</span> Excel</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-pdf);">P</span> PDF</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-ppt);">P</span> PPT</div>
+        <div class="cat-pill"><span class="cat-icon">&#x1F4E6;</span> 压缩</div>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Hover on "图片"</span>
+      <div class="cat-bar">
+        <div class="cat-pill active"><span class="cat-icon">&#x1F4CB;</span> 全部</div>
+        <div class="cat-pill" style="border-color:rgba(124,224,195,0.32);color:var(--text-secondary);background:rgba(124,224,195,0.06);"><span class="cat-icon">&#x1F5BC;&#xFE0F;</span> 图片</div>
+        <div class="cat-pill"><span class="cat-icon">&#x1F5BC;&#xFE0F;</span> 图片</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-word);">W</span> Word</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-excel);">X</span> Excel</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-pdf);">P</span> PDF</div>
+      </div>
+    </div>
+    <div class="state-row">
+      <span class="state-label">Alternate: "图片" active</span>
+      <div class="cat-bar">
+        <div class="cat-pill"><span class="cat-icon">&#x1F4CB;</span> 全部</div>
+        <div class="cat-pill"><span class="cat-icon">&#x1F4DD;</span> 文本</div>
+        <div class="cat-pill active"><span class="cat-icon">&#x1F5BC;&#xFE0F;</span> 图片</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-word);">W</span> Word</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-excel);">X</span> Excel</div>
+        <div class="cat-pill"><span class="cat-icon" style="color:var(--type-pdf);">P</span> PDF</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. STAGING SHELF
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">06</span>
+    <h2>StagingShelf <span>暂存架</span></h2>
+  </div>
+  <div class="comp-frame-body panel-width">
+    <div class="state-row">
+      <span class="state-label">Shelf with 6 cards + hover overlay on card 2</span>
+      <div class="staging-shelf">
+        <div class="staging-header">
+          <span class="shelf-icon">&#x1F4E5;</span>
+          <span class="shelf-title">暂存架</span>
+          <span class="shelf-count">5/20</span>
+          <div class="shelf-spacer"></div>
+          <div class="staging-header-btn" title="折叠">&#x25BE;</div>
+          <div class="staging-header-btn danger" title="清空">&#x2715;</div>
+        </div>
+        <div class="staging-grid">
+          <!-- Card 1: image thumbnail -->
+          <div class="staging-card image-thumb">
+            <span class="card-icon">&#x1F5BC;&#xFE0F;</span>
+            <span class="card-label">截图</span>
+          </div>
+          <!-- Card 2: PDF with hover overlay -->
+          <div class="staging-card show-overlay">
+            <span class="card-icon">&#x1F4C4;</span>
+            <span class="card-label">方案.pdf</span>
+            <div class="hover-overlay">
+              <div class="overlay-actions">
+                <div class="overlay-btn copy-btn" title="复制">&#x1F4CB;</div>
+                <div class="overlay-btn remove-btn" title="移除">&#x2715;</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card 3: text preview -->
+          <div class="staging-card">
+            <span class="card-icon">&#x1F4DD;</span>
+            <span class="card-label">收货地址</span>
+          </div>
+          <!-- Card 4: Excel -->
+          <div class="staging-card">
+            <span class="card-icon" style="color:var(--type-excel);">X</span>
+            <span class="card-label">报价单.xlsx</span>
+          </div>
+          <!-- Card 5: link -->
+          <div class="staging-card">
+            <span class="card-icon">&#x1F517;</span>
+            <span class="card-label">GitHub</span>
+          </div>
+          <!-- Card 6: empty + -->
+          <div class="staging-card empty-card">+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. DROP OVERLAY
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">07</span>
+    <h2>DropOverlay <span>拖拽覆盖层</span></h2>
+  </div>
+  <div class="comp-frame-body panel-width">
+    <div class="state-row">
+      <span class="state-label">Drag-over state with pulse animation</span>
+      <div class="drop-overlay-demo">
+        <div style="position:absolute;inset:0;padding:12px;opacity:0.3;">
+          <div style="height:24px;background:var(--bg-panel-header);border-radius:4px;margin-bottom:6px;"></div>
+          <div style="height:16px;background:var(--bg-tertiary);border-radius:3px;width:70%;margin-bottom:4px;"></div>
+          <div style="height:16px;background:var(--bg-tertiary);border-radius:3px;width:85%;margin-bottom:4px;"></div>
+          <div style="height:16px;background:var(--bg-tertiary);border-radius:3px;width:60%;"></div>
+        </div>
+        <div class="drop-overlay">
+          <div class="drop-icon">&#x1F4E5;</div>
+          <div class="drop-text">拖入添加</div>
+          <div class="drop-subtext">支持文件、图片、文本</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. FLOATING BALL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">08</span>
+    <h2>FloatingBall <span>悬浮球</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Default / Hover / Badge states</span>
+      <div class="float-ball-container">
+        <div class="ball-state-group">
+          <div class="float-ball">
+            <span class="ball-emoji">&#x1F4E6;</span>
+            <span class="badge">5</span>
+            <span class="status-dot"></span>
+          </div>
+          <span class="ball-state-label">Default</span>
+        </div>
+        <div class="ball-state-group">
+          <div class="float-ball" style="transform:scale(1.08);box-shadow:0 6px 24px rgba(124,224,195,0.45),0 2px 8px rgba(0,0,0,0.3);background:linear-gradient(135deg,#8AEAD0,#72CEDF);">
+            <span class="ball-emoji">&#x1F4E6;</span>
+            <span class="badge">5</span>
+            <span class="status-dot"></span>
+          </div>
+          <span class="ball-state-label">Hover</span>
+        </div>
+        <div class="ball-state-group">
+          <div class="float-ball" style="width:48px;height:48px;">
+            <span class="ball-emoji" style="font-size:20px;">&#x1F4E6;</span>
+            <span class="badge" style="min-width:18px;height:18px;font-size:10px;">12</span>
+            <span class="status-dot" style="width:10px;height:10px;"></span>
+          </div>
+          <span class="ball-state-label">Compact</span>
+        </div>
+        <div class="ball-state-group">
+          <div class="float-ball" style="width:56px;height:56px;background:linear-gradient(135deg,var(--accent-mint),var(--accent-cyan));box-shadow:0 4px 16px rgba(124,224,195,0.30),0 2px 6px rgba(0,0,0,0.3);">
+            <span class="ball-emoji">&#x1F4E6;</span>
+            <span class="status-dot" style="background:var(--status-warning);"></span>
+          </div>
+          <span class="ball-state-label">Warning</span>
+        </div>
+        <div class="ball-state-group">
+          <div class="float-ball" style="width:56px;height:56px;background:linear-gradient(135deg,var(--accent-mint),var(--accent-cyan));box-shadow:0 4px 16px rgba(124,224,195,0.30),0 2px 6px rgba(0,0,0,0.3);">
+            <span class="ball-emoji">&#x1F4E6;</span>
+            <span class="status-dot" style="background:var(--status-error);"></span>
+          </div>
+          <span class="ball-state-label">Error</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     9. PREVIEW BAR (expanded)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">09</span>
+    <h2>PreviewBar <span>悬浮球展开态</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Expanded list with hover on item 2</span>
+      <div class="preview-bar">
+        <div class="preview-bar-header">
+          <span class="pb-title">最近内容</span>
+          <div class="titlebar-ctrl" style="font-size:12px;">&#x25B7;</div>
+          <div class="titlebar-ctrl" style="font-size:12px;">&times;</div>
+        </div>
+        <!-- Item 1: text -->
+        <div class="preview-bar-item">
+          <div class="thumb">&#x1F4DD;</div>
+          <div class="item-info">
+            <div class="item-text">请把那个方案文档发我一下</div>
+            <div class="item-meta">
+              <span class="item-time">2 分钟前</span>
+              <span class="item-type-icon" style="color:var(--type-text);">T</span>
+            </div>
+          </div>
+        </div>
+        <!-- Item 2: image (hover) -->
+        <div class="preview-bar-item" style="background:var(--bg-hover);">
+          <div class="thumb img-thumb">&#x1F5BC;&#xFE0F;</div>
+          <div class="item-info">
+            <div class="item-text">screenshot_20260531.png</div>
+            <div class="item-meta">
+              <span class="item-time">5 分钟前</span>
+              <span class="item-type-icon" style="color:var(--type-image);">I</span>
+            </div>
+          </div>
+          <div class="item-actions" style="opacity:1;">
+            <div class="act-btn" title="复制">&#x1F4CB;</div>
+            <div class="act-btn" title="展开">&#x27F7;</div>
+            <div class="act-btn" title="关闭">&times;</div>
+          </div>
+        </div>
+        <!-- Item 3: pdf -->
+        <div class="preview-bar-item">
+          <div class="thumb" style="color:var(--type-pdf);">&#x1F4C4;</div>
+          <div class="item-info">
+            <div class="item-text">产品需求文档_v2.pdf</div>
+            <div class="item-meta">
+              <span class="item-time">18 分钟前</span>
+              <span class="item-type-icon" style="color:var(--type-pdf);">P</span>
+            </div>
+          </div>
+        </div>
+        <!-- Item 4: code -->
+        <div class="preview-bar-item">
+          <div class="thumb" style="color:var(--accent-cyan);">{ }</div>
+          <div class="item-info">
+            <div class="item-text">def calculate_total(items):</div>
+            <div class="item-meta">
+              <span class="item-time">32 分钟前</span>
+              <span class="item-type-icon" style="color:var(--type-text);">T</span>
+            </div>
+          </div>
+        </div>
+        <!-- Item 5: link -->
+        <div class="preview-bar-item">
+          <div class="thumb" style="color:var(--accent-gold);">&#x1F517;</div>
+          <div class="item-info">
+            <div class="item-text">https://github.com/shiyi/clipboard</div>
+            <div class="item-meta">
+              <span class="item-time">1 小时前</span>
+              <span class="item-type-icon" style="color:var(--accent-gold);">L</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     10. TAG DIALOG
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame full-width">
+  <div class="comp-frame-header">
+    <span class="num">10</span>
+    <h2>TagDialog <span>标签管理对话框</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Tag management modal with hover on row 2</span>
+      <div class="modal-backdrop" style="min-height:360px;">
+        <div class="dialog">
+          <div class="dialog-header">
+            <h3>标签管理</h3>
+            <div class="dialog-close">&times;</div>
+          </div>
+          <div class="dialog-body">
+            <!-- Tag rows -->
+            <div class="tag-row">
+              <div class="color-dot" style="background:var(--accent-mint);"></div>
+              <span class="tag-name">工作</span>
+              <div class="tag-actions">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+            <div class="tag-row" style="background:var(--bg-hover);">
+              <div class="color-dot" style="background:var(--accent-cyan);"></div>
+              <span class="tag-name">学习笔记</span>
+              <div class="tag-actions" style="opacity:1;">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+            <div class="tag-row">
+              <div class="color-dot" style="background:var(--accent-gold);"></div>
+              <span class="tag-name">重要</span>
+              <div class="tag-actions">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+            <div class="tag-row">
+              <div class="color-dot" style="background:var(--accent-green);"></div>
+              <span class="tag-name">创意</span>
+              <div class="tag-actions">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+            <div class="tag-row">
+              <div class="color-dot" style="background:var(--type-pdf);"></div>
+              <span class="tag-name">文档</span>
+              <div class="tag-actions">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+            <div class="tag-row">
+              <div class="color-dot" style="background:var(--type-word);"></div>
+              <span class="tag-name">代码片段</span>
+              <div class="tag-actions">
+                <div class="tag-act" title="编辑">&#x270E;</div>
+                <div class="tag-act delete" title="删除">&#x1F5D1;&#xFE0F;</div>
+              </div>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">创建新标签</div>
+            <div class="new-tag-row">
+              <div class="color-picker">
+                <div class="color-pick selected" style="background:var(--accent-mint);"></div>
+                <div class="color-pick" style="background:var(--accent-cyan);"></div>
+                <div class="color-pick" style="background:var(--accent-gold);"></div>
+                <div class="color-pick" style="background:var(--accent-green);"></div>
+                <div class="color-pick" style="background:var(--type-pdf);"></div>
+                <div class="color-pick" style="background:var(--type-word);"></div>
+              </div>
+              <input class="tag-input" type="text" placeholder="输入标签名称..." value="">
+              <button class="tag-save-btn">保存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     11. EXPORT DIALOG
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame full-width">
+  <div class="comp-frame-header">
+    <span class="num">11</span>
+    <h2>ExportDialog <span>导出对话框</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Export options modal</span>
+      <div class="modal-backdrop" style="min-height:360px;">
+        <div class="dialog">
+          <div class="dialog-header">
+            <h3>导出内容</h3>
+            <div class="dialog-close">&times;</div>
+          </div>
+          <div class="dialog-body" style="max-height:none;">
+            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:10px;">选择导出格式</div>
+            <div class="export-options">
+              <div class="radio-option selected">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="radio-label">TXT 纯文本</div>
+                  <div class="radio-desc">适合文字内容，最简洁的格式</div>
+                </div>
+              </div>
+              <div class="radio-option">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="radio-label">CSV 表格</div>
+                  <div class="radio-desc">可用 Excel 打开，保留标签信息</div>
+                </div>
+              </div>
+              <div class="radio-option">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="radio-label">JSON 数据</div>
+                  <div class="radio-desc">完整结构化数据，适合开发者</div>
+                </div>
+              </div>
+              <div class="radio-option">
+                <div class="radio-dot"></div>
+                <div>
+                  <div class="radio-label">Markdown</div>
+                  <div class="radio-desc">富文本格式，保留标题和结构</div>
+                </div>
+              </div>
+            </div>
+            <div class="checkbox-row">
+              <div class="checkbox checked"></div>
+              <span class="checkbox-label">包含标签信息</span>
+            </div>
+          </div>
+          <div style="padding:0 20px;">
+            <div class="filepath-preview">
+              <span class="fp-icon">&#x1F4C2;</span>
+              <span class="fp-text">C:\Users\knigh\Desktop\export_20260531.txt</span>
+              <span class="fp-browse">浏览...</span>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button class="cancel-btn">取消</button>
+            <button class="confirm-btn">导出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     12. TRAY MENU
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">12</span>
+    <h2>TrayIconMenu <span>托盘菜单</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">System tray context menu</span>
+      <div class="tray-menu">
+        <div class="tray-item">
+          <span class="tray-icon">&#x1F4E4;</span>
+          <span class="tray-label">显示主面板</span>
+          <span class="tray-shortcut">Ctrl+Shift+V</span>
+        </div>
+        <div class="tray-toggle">
+          <span class="tray-icon">&#x1F4F2;</span>
+          <span class="tray-label">开启剪贴板监听</span>
+          <div class="toggle-switch on"></div>
+        </div>
+        <div class="tray-separator"></div>
+        <div class="tray-item">
+          <span class="tray-icon">&#x26A1;</span>
+          <span class="tray-label">常用短语</span>
+          <span class="tray-shortcut">Ctrl+Shift+P</span>
+        </div>
+        <div class="tray-item">
+          <span class="tray-icon">&#x1F5D1;&#xFE0F;</span>
+          <span class="tray-label">回收站</span>
+          <span class="tray-shortcut"></span>
+        </div>
+        <div class="tray-separator"></div>
+        <div class="tray-item" style="color:var(--error);">
+          <span class="tray-icon">&#x274C;</span>
+          <span class="tray-label">退出</span>
+          <span class="tray-shortcut">Alt+F4</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <span class="state-label">Tray menu - listening off</span>
+      <div class="tray-menu">
+        <div class="tray-item">
+          <span class="tray-icon">&#x1F4E4;</span>
+          <span class="tray-label">显示主面板</span>
+          <span class="tray-shortcut">Ctrl+Shift+V</span>
+        </div>
+        <div class="tray-toggle">
+          <span class="tray-icon">&#x1F4F2;</span>
+          <span class="tray-label" style="color:var(--text-tertiary);">开启剪贴板监听</span>
+          <div class="toggle-switch"></div>
+        </div>
+        <div class="tray-separator"></div>
+        <div class="tray-item">
+          <span class="tray-icon">&#x26A1;</span>
+          <span class="tray-label">常用短语</span>
+          <span class="tray-shortcut">Ctrl+Shift+P</span>
+        </div>
+        <div class="tray-item">
+          <span class="tray-icon">&#x1F5D1;&#xFE0F;</span>
+          <span class="tray-label">回收站</span>
+        </div>
+        <div class="tray-separator"></div>
+        <div class="tray-item" style="color:var(--error);">
+          <span class="tray-icon">&#x274C;</span>
+          <span class="tray-label">退出</span>
+          <span class="tray-shortcut">Alt+F4</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     13. NOTIFICATION TOAST
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame">
+  <div class="comp-frame-header">
+    <span class="num">13</span>
+    <h2>NotificationToast <span>通知提示</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row">
+      <span class="state-label">Success / Warning / Error variants with auto-dismiss</span>
+      <div class="toast-container">
+        <!-- Success toast -->
+        <div class="toast success">
+          <div class="toast-accent"></div>
+          <span class="toast-icon">&#x2705;</span>
+          <span class="toast-msg">已复制到剪贴板</span>
+          <div class="toast-close">&times;</div>
+          <div class="toast-progress"></div>
+        </div>
+        <!-- Warning toast -->
+        <div class="toast warning">
+          <div class="toast-accent"></div>
+          <span class="toast-icon">&#x26A0;&#xFE0F;</span>
+          <span class="toast-msg">剪贴板内容已过期</span>
+          <div class="toast-close">&times;</div>
+          <div class="toast-progress"></div>
+        </div>
+        <!-- Error toast -->
+        <div class="toast error">
+          <div class="toast-accent"></div>
+          <span class="toast-icon">&#x274C;</span>
+          <span class="toast-msg">导出失败，请检查文件权限</span>
+          <div class="toast-close">&times;</div>
+          <div class="toast-progress"></div>
+        </div>
+        <!-- Info toast -->
+        <div class="toast success">
+          <div class="toast-accent"></div>
+          <span class="toast-icon">&#x1F4E5;</span>
+          <span class="toast-msg">已添加到暂存架</span>
+          <div class="toast-close">&times;</div>
+          <div class="toast-progress" style="width:60%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     14. PREVIEW WINDOW
+     ═══════════════════════════════════════════════════════════ -->
+<div class="comp-frame full-width">
+  <div class="comp-frame-header">
+    <span class="num">14</span>
+    <h2>PreviewWindow <span>预览窗口</span></h2>
+  </div>
+  <div class="comp-frame-body">
+    <div class="state-row" style="gap:16px;flex-direction:row;flex-wrap:wrap;">
+      <div style="flex:1;min-width:300px;">
+        <span class="state-label">Text preview with line numbers</span>
+        <div style="margin-top:6px;">
+          <div class="preview-window">
+            <div class="pw-header">
+              <span class="pw-icon">&#x1F4DD;</span>
+              <span class="pw-title">clipboard_content_20260531.txt</span>
+              <div class="pw-close">&times;</div>
+            </div>
+            <div class="pw-content">
+              <div class="code-preview">
+                <div class="line"><span class="line-num">1</span><span class="line-content"><span class="kw">import</span> sys</span></div>
+                <div class="line"><span class="line-num">2</span><span class="line-content"><span class="kw">from</span> pathlib <span class="kw">import</span> Path</span></div>
+                <div class="line"><span class="line-num">3</span><span class="line-content"></span></div>
+                <div class="line"><span class="line-num">4</span><span class="line-content"><span class="kw">def</span> calculate_total(items):</span></div>
+                <div class="line"><span class="line-num">5</span><span class="line-content">    <span class="str">"""Calculate total price."""</span></span></div>
+                <div class="line"><span class="line-num">6</span><span class="line-content">    total = <span class="num">0</span></span></div>
+                <div class="line"><span class="line-num">7</span><span class="line-content">    <span class="kw">for</span> item <span class="kw">in</span> items:</span></div>
+                <div class="line"><span class="line-num">8</span><span class="line-content">        total += item.price * item.qty</span></div>
+                <div class="line"><span class="line-num">9</span><span class="line-content">    <span class="kw">return</span> total</span></div>
+                <div class="line"><span class="line-num">10</span><span class="line-content"></span></div>
+                <div class="line"><span class="line-num">11</span><span class="line-content"><span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:</span></div>
+                <div class="line"><span class="line-num">12</span><span class="line-content">    print(<span class="str">"Hello"</span>)</span></div>
+              </div>
+            </div>
+            <div class="pw-actions">
+              <button class="sy-btn compact"><span class="icon">&#x1F4CB;</span> 复制</button>
+              <button class="sy-btn compact"><span class="icon">&#x1F4C4;</span> 在编辑器中打开</button>
+              <button class="sy-btn compact"><span class="icon">&#x1F4CC;</span> 固定</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:300px;">
+        <span class="state-label">Image preview</span>
+        <div style="margin-top:6px;">
+          <div class="preview-window">
+            <div class="pw-header">
+              <span class="pw-icon" style="color:var(--type-image);">&#x1F5BC;&#xFE0F;</span>
+              <span class="pw-title">screenshot_20260531.png</span>
+              <div class="pw-close">&times;</div>
+            </div>
+            <div class="pw-content" style="padding:12px;">
+              <div class="img-preview">
+                <span>&#x1F5BC;&#xFE0F;</span>
+                <span>1920 x 1080</span>
+                <span style="color:var(--text-placeholder);">2.4 MB</span>
+              </div>
+            </div>
+            <div class="pw-actions">
+              <button class="sy-btn compact"><span class="icon">&#x1F4CB;</span> 复制</button>
+              <button class="sy-btn compact"><span class="icon">&#x1F4C4;</span> 在编辑器中打开</button>
+              <button class="sy-btn compact"><span class="icon">&#x1F4CC;</span> 固定</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .grid -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOKENS REFERENCE
+     ═══════════════════════════════════════════════════════════ -->
+<div style="max-width:1600px;margin:48px auto;padding:32px 24px;">
+  <div class="comp-frame">
+    <div class="comp-frame-header">
+      <span class="num">REF</span>
+      <h2>Design Tokens <span>设计系统速查</span></h2>
+    </div>
+    <div class="comp-frame-body" style="padding:24px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+
+        <!-- Background -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Background</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#080B0F;border:1px solid #1A2230;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#080B0F Primary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#10161C;border:1px solid #1A2230;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#10161C Secondary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#172029;border:1px solid #1A2230;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#172029 Tertiary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#24313B;border:1px solid #1A2230;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#24313B Hover</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#2E4050;border:1px solid #1A2230;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#2E4050 Active</span></div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Text</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#F0F5F2;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#F0F5F2 Primary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#A8B3BD;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#A8B3BD Secondary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#71808F;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#71808F Tertiary</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#4A5568;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#4A5568 Placeholder</span></div>
+          </div>
+        </div>
+
+        <!-- Accent -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Accent</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#7CE0C3;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#7CE0C3 Mint</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#66B8C7;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#66B8C7 Cyan</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#F2B84B;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#F2B84B Gold</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#54D49E;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#54D49E Green</span></div>
+          </div>
+        </div>
+
+        <!-- Status & Semantic -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Status / Semantic</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#1FB84F;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#1FB84F Online</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#F2B84B;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#F2B84B Warning</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#F06464;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#F06464 Error</span></div>
+            <div style="display:flex;align-items:center;gap:10px;height:28px;"><div style="width:28px;height:28px;border-radius:4px;background:#238636;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">#238636 Success</span></div>
+          </div>
+        </div>
+
+        <!-- Spacing & Radius -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Spacing & Radius</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:4px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">4px XS</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:8px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">8px SM</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:12px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">12px MD</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:16px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">16px LG</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">24px XL</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:20px;background:var(--accent-mint);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-secondary);">32px XXL</span></div>
+          </div>
+        </div>
+
+        <!-- Radius shapes -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--font-secondary);">Radius</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;">
+            <div style="text-align:center;"><div style="width:36px;height:36px;border:2px solid var(--accent-mint);border-radius:6px;"></div><div style="font-size:9px;color:var(--text-tertiary);margin-top:4px;">SM 6</div></div>
+            <div style="text-align:center;"><div style="width:36px;height:36px;border:2px solid var(--accent-mint);border-radius:10px;"></div><div style="font-size:9px;color:var(--text-tertiary);margin-top:4px;">MD 10</div></div>
+            <div style="text-align:center;"><div style="width:36px;height:36px;border:2px solid var(--accent-mint);border-radius:14px;"></div><div style="font-size:9px;color:var(--text-tertiary);margin-top:4px;">LG 14</div></div>
+            <div style="text-align:center;"><div style="width:36px;height:36px;border:2px solid var(--accent-mint);border-radius:9999px;"></div><div style="font-size:9px;color:var(--text-tertiary);margin-top:4px;">Full</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -165,3 +165,65 @@ class DragHandler:
             painter.drawText(QRect(x, y, size, size), Qt.AlignmentFlag.AlignCenter, "📄")
         painter.end()
         return canvas
+
+    # ── Staging item drag-out ──
+
+    @staticmethod
+    def start_staging_drag(item: dict, parent_widget) -> Optional[QDrag]:
+        """Start a drag operation for a staging shelf item (dict format)."""
+        mime_data = DragHandler._create_staging_mime_data(item)
+        if mime_data is None:
+            return None
+
+        drag = QDrag(parent_widget)
+        drag.setMimeData(mime_data)
+
+        # Drag preview pixmap
+        thumb_path = item.get("thumbnail_path", "")
+        if thumb_path and Path(thumb_path).exists():
+            pixmap = QPixmap(thumb_path)
+            if not pixmap.isNull():
+                drag.setPixmap(pixmap.scaled(
+                    64, 64, Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                ))
+                drag.setHotSpot(QPoint(32, 32))
+
+        drag.exec(Qt.DropAction.CopyAction | Qt.DropAction.MoveAction)
+        return drag
+
+    @staticmethod
+    def _create_staging_mime_data(item: dict) -> Optional[QMimeData]:
+        """Create MIME data for a staging item dict."""
+        from PyQt6.QtCore import QUrl
+        mime_data = QMimeData()
+        ct = item.get("content_type", "TEXT")
+
+        if ct == "TEXT" and item.get("content_text"):
+            mime_data.setText(item["content_text"])
+            return mime_data
+
+        elif ct == "HTML":
+            if item.get("content_html"):
+                mime_data.setHtml(item["content_html"])
+            if item.get("content_text"):
+                mime_data.setText(item["content_text"])
+            return mime_data
+
+        elif ct == "FILES" and item.get("content_text"):
+            files = item["content_text"].split("\n")
+            mime_data.setUrls([QUrl.fromLocalFile(f) for f in files if f.strip()])
+            return mime_data
+
+        elif ct == "IMAGE":
+            fp = item.get("file_path", "")
+            if fp and Path(fp).exists():
+                mime_data.setUrls([QUrl.fromLocalFile(fp)])
+                try:
+                    with open(fp, "rb") as f:
+                        mime_data.setData("image/png", f.read())
+                except OSError:
+                    pass
+                return mime_data
+
+        return None

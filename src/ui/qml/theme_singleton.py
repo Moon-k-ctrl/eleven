@@ -282,7 +282,7 @@ class ThemeSingleton(QObject):
 
     @pyqtProperty(int, constant=True)
     def panelHeight(self) -> int:
-        return 520
+        return 620
 
     @pyqtProperty(int, constant=True)
     def itemHeight(self) -> int:

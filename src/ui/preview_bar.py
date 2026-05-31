@@ -59,6 +59,16 @@ VLIST_W = 320           # 预览栏宽度
 VLIST_MIN_H = 120       # 最小高度
 VLIST_MAX_H = 400       # 最大高度
 
+# Staging shelf layout constants (暂存架)
+STAGING_CARD_SIZE = 72   # 卡片尺寸
+STAGING_GAP = 6          # 卡片间距
+STAGING_PADDING = 10     # 内边距
+STAGING_COLS = 3         # 列数
+STAGING_W = STAGING_PADDING * 2 + STAGING_COLS * STAGING_CARD_SIZE + (STAGING_COLS - 1) * STAGING_GAP  # = 260
+STAGING_HEADER_H = 32    # 标题栏高度
+STAGING_FOOTER_H = 24    # 底部高度
+STAGING_MAX_CARDS = 9    # 最多显示 3x3
+
 
 class PreviewBar(QWidget):
     """Floating ball ↔ preview strip morphing widget."""
@@ -75,11 +85,13 @@ class PreviewBar(QWidget):
     copy_item_requested = pyqtSignal(int)
     preview_item_requested = pyqtSignal(object)
     remove_item_requested = pyqtSignal(int)
+    staging_file_dropped = pyqtSignal(list)  # files dropped onto staging shelf
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._items: list[ClipboardItem] = []
-        self._mode = "ball"  # "ball" | "preview"
+        self._staging_items: list[dict] = []  # staging shelf items (dicts from DB)
+        self._mode = "ball"  # "ball" | "preview" | "staging"
         self._count = 0  # badge count (total items in DB)
         self._status = "offline"  # "online" | "warning" | "error" | "offline"
         self._theme = ThemeSingleton()
@@ -249,6 +261,22 @@ class PreviewBar(QWidget):
         self._items = list(items)
         self.update()
 
+    def set_staging_items(self, items: list[dict]):
+        """Update staging shelf items from DB."""
+        self._staging_items = list(items)[:STAGING_MAX_CARDS]
+        if self._mode == "staging":
+            self._recalc_staging_geometry()
+            self.update()
+
+    def _recalc_staging_geometry(self):
+        """Recalculate window size for current staging items count."""
+        visible = max(1, len(self._staging_items))
+        rows = (visible + STAGING_COLS - 1) // STAGING_COLS
+        target_h = STAGING_HEADER_H + rows * (STAGING_CARD_SIZE + STAGING_GAP) + STAGING_FOOTER_H + STAGING_PADDING
+        target_h = max(STAGING_HEADER_H + STAGING_CARD_SIZE + STAGING_FOOTER_H + STAGING_PADDING * 2, target_h)
+        geo = self.geometry()
+        self.setGeometry(geo.x(), geo.y(), STAGING_W, target_h)
+
     def toggle(self):
         if self.isVisible():
             self.hide()
@@ -352,6 +380,58 @@ class PreviewBar(QWidget):
         self.all_cleared.emit()
         self.update()
 
+    def _morph_to_staging(self):
+        """Morph from ball to staging shelf grid."""
+        if self._is_animating:
+            return
+        self._is_animating = True
+        self._long_hover_timer.stop()
+        self._saved_ball_pos = (self.x(), self.y())
+
+        visible = max(1, len(self._staging_items))
+        rows = (visible + STAGING_COLS - 1) // STAGING_COLS
+        target_w = STAGING_W
+        target_h = STAGING_HEADER_H + rows * (STAGING_CARD_SIZE + STAGING_GAP) + STAGING_FOOTER_H + STAGING_PADDING
+        target_h = max(STAGING_HEADER_H + STAGING_CARD_SIZE + STAGING_FOOTER_H + STAGING_PADDING * 2, target_h)
+
+        screen = QApplication.primaryScreen()
+        if not screen:
+            self._is_animating = False
+            return
+        geo = screen.availableGeometry()
+        # Position: to the left of the ball's current position
+        ball_x = self.x()
+        target_x = ball_x - target_w + BALL_WINDOW_W
+        target_x = max(geo.left() + 4, min(target_x, geo.right() - target_w - 4))
+        target_y = self.y()
+
+        self._morph_progress = 0.0
+
+        geom_anim = QPropertyAnimation(self, b"geometry")
+        geom_anim.setDuration(300)
+        geom_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        geom_anim.setStartValue(self.geometry())
+        geom_anim.setEndValue(self._make_rect(target_x, target_y, target_w, target_h))
+
+        progress_anim = QPropertyAnimation(self, b"morph_progress")
+        progress_anim.setDuration(300)
+        progress_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        progress_anim.setStartValue(0.0)
+        progress_anim.setEndValue(1.0)
+
+        group = QParallelAnimationGroup(self)
+        group.addAnimation(geom_anim)
+        group.addAnimation(progress_anim)
+        group.finished.connect(self._on_staging_morph_finished)
+        group.start()
+        self._morph_anim = group
+
+    def _on_staging_morph_finished(self):
+        self._mode = "staging"
+        self._morph_progress = 1.0
+        self._is_animating = False
+        self.update()
+
     @staticmethod
     def _make_rect(x, y, w, h):
         from PyQt6.QtCore import QRect
@@ -369,23 +449,31 @@ class PreviewBar(QWidget):
                 p.setOpacity(1.0 - t)
                 self._paint_ball(p)
                 p.restore()
-                
+
                 p.save()
                 p.setOpacity(t)
-                self._paint_preview_bar(p)
+                if self._mode == "staging" or (self._mode == "ball" and self._drag_over):
+                    self._paint_staging_grid(p)
+                else:
+                    self._paint_preview_bar(p)
                 p.restore()
             else:
                 p.save()
                 p.setOpacity(t)
-                self._paint_preview_bar(p)
+                if self._mode == "staging" or (self._mode == "ball" and self._drag_over):
+                    self._paint_staging_grid(p)
+                else:
+                    self._paint_preview_bar(p)
                 p.restore()
-                
+
                 p.save()
                 p.setOpacity(1.0 - t)
                 self._paint_ball(p)
                 p.restore()
         elif self._mode == "ball":
             self._paint_ball(p)
+        elif self._mode == "staging":
+            self._paint_staging_grid(p)
         else:
             self._paint_preview_bar(p)
         p.end()
@@ -654,6 +742,145 @@ class PreviewBar(QWidget):
         p.setFont(QFont("Segoe UI", 10))
         p.drawText(cl, Qt.AlignmentFlag.AlignCenter, "✕")
 
+    def _paint_staging_grid(self, p: QPainter):
+        """Paint the staging shelf as a grid of content cards."""
+        from PyQt6.QtGui import QFont
+        w, h = self.width(), self.height()
+
+        # Background
+        bg = QPainterPath()
+        bg.addRoundedRect(QRectF(0, 0, w, h), 14, 14)
+        p.setPen(QPen(QColor(self._theme.lineSoft), 1))
+        p.setBrush(QColor(self._theme.surface1))
+        p.drawPath(bg)
+
+        # Header
+        header_rect = QRectF(STAGING_PADDING, 4, w - STAGING_PADDING * 2, STAGING_HEADER_H)
+        p.setPen(QColor(self._theme.textSecondary))
+        p.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+        p.drawText(header_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "📥 暂存架")
+        p.setPen(QColor(self._theme.textPlaceholder))
+        p.setFont(QFont("Segoe UI", 9))
+        count_text = f"{len(self._staging_items)}/20"
+        p.drawText(header_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, count_text)
+
+        # Grid cards
+        y_start = STAGING_HEADER_H + STAGING_PADDING
+        for i, item in enumerate(self._staging_items[:STAGING_MAX_CARDS]):
+            col = i % STAGING_COLS
+            row = i // STAGING_COLS
+            cx = STAGING_PADDING + col * (STAGING_CARD_SIZE + STAGING_GAP)
+            cy = y_start + row * (STAGING_CARD_SIZE + STAGING_GAP)
+            card_rect = QRectF(cx, cy, STAGING_CARD_SIZE, STAGING_CARD_SIZE)
+
+            # Card background
+            card_path = QPainterPath()
+            card_path.addRoundedRect(card_rect, 8, 8)
+            hovered = i == self._hovered_index
+            if hovered:
+                p.setPen(QPen(QColor(self._theme.borderHover), 1))
+                p.setBrush(QColor(self._theme.bgHover))
+            else:
+                p.setPen(QPen(QColor(self._theme.border), 1))
+                p.setBrush(QColor(self._theme.bgTertiary))
+            p.drawPath(card_path)
+
+            # Card content
+            ct = item.get("content_type", "TEXT")
+            thumb_path = item.get("thumbnail_path", "")
+            file_path = item.get("file_path", "")
+
+            if ct == "IMAGE" and thumb_path and Path(thumb_path).exists():
+                # Image thumbnail
+                pixmap = QPixmap(thumb_path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(
+                        int(STAGING_CARD_SIZE - 8), int(STAGING_CARD_SIZE - 8),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
+                    img_x = cx + (STAGING_CARD_SIZE - scaled.width()) / 2
+                    img_y = cy + (STAGING_CARD_SIZE - scaled.height()) / 2
+                    p.drawPixmap(int(img_x), int(img_y), scaled)
+            else:
+                # Type icon
+                icon_map = {
+                    "TEXT": ("📝", QColor(self._theme.typeText)),
+                    "HTML": ("🌐", QColor(self._theme.accentCyan)),
+                    "FILES": ("📄", QColor(self._theme.typeWord)),
+                }
+                icon, color = icon_map.get(ct, ("📋", QColor(self._theme.typeText)))
+
+                # Check file extension for specific icons
+                if ct == "FILES" and item.get("content_text"):
+                    first = item["content_text"].split("\n")[0].strip()
+                    ext = Path(first).suffix.lower() if first else ""
+                    ext_icons = {
+                        ".pdf": ("📕", QColor(self._theme.typePdf)),
+                        ".doc": ("📘", QColor(self._theme.typeWord)),
+                        ".docx": ("📘", QColor(self._theme.typeWord)),
+                        ".xls": ("📗", QColor(self._theme.typeExcel)),
+                        ".xlsx": ("📗", QColor(self._theme.typeExcel)),
+                        ".ppt": ("📙", QColor(self._theme.typePpt)),
+                        ".pptx": ("📙", QColor(self._theme.typePpt)),
+                    }
+                    if ext in ext_icons:
+                        icon, color = ext_icons[ext]
+
+                p.setFont(QFont("Segoe UI Emoji", 22))
+                p.setPen(QColor(255, 255, 255))
+                icon_rect = QRectF(cx, cy, STAGING_CARD_SIZE, STAGING_CARD_SIZE - 16)
+                p.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, icon)
+
+                # Title text
+                title = self._staging_card_title(item)
+                p.setFont(QFont("Microsoft YaHei", 7))
+                p.setPen(QColor(self._theme.textTertiary))
+                title_rect = QRectF(cx + 2, cy + STAGING_CARD_SIZE - 18, STAGING_CARD_SIZE - 4, 14)
+                p.drawText(title_rect, Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, title)
+
+            # Drag-over highlight on card
+            if self._drag_over and hovered:
+                overlay = QPainterPath()
+                overlay.addRoundedRect(card_rect, 8, 8)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(QColor(124, 224, 195, 40))
+                p.drawPath(overlay)
+
+        # Empty state
+        if not self._staging_items:
+            empty_rect = QRectF(STAGING_PADDING, y_start, w - STAGING_PADDING * 2, STAGING_CARD_SIZE)
+            p.setPen(QColor(self._theme.textPlaceholder))
+            p.setFont(QFont("Microsoft YaHei", 10))
+            p.drawText(empty_rect, Qt.AlignmentFlag.AlignCenter, "拖入文件到此处")
+
+        # Drop zone indicator (when dragging over)
+        if self._drag_over:
+            # Highlight the whole staging area
+            drop_zone = QPainterPath()
+            drop_zone.addRoundedRect(QRectF(STAGING_PADDING, y_start,
+                w - STAGING_PADDING * 2,
+                max(STAGING_CARD_SIZE, h - y_start - STAGING_FOOTER_H)), 8, 8)
+            p.setPen(QPen(QColor(self._theme.accentMint), 2, Qt.PenStyle.DashLine))
+            p.setBrush(QColor(124, 224, 195, 15))
+            p.drawPath(drop_zone)
+
+    @staticmethod
+    def _staging_card_title(item: dict) -> str:
+        """Generate a short title for a staging card."""
+        ct = item.get("content_type", "TEXT")
+        if ct == "TEXT":
+            text = (item.get("content_text") or "")[:12].replace("\n", " ")
+            return text or "文本"
+        if ct == "IMAGE":
+            return "图片"
+        if ct == "FILES":
+            fp = (item.get("content_text") or "").split("\n")[0].strip()
+            return Path(fp).name[:12] if fp else "文件"
+        if ct == "HTML":
+            return "HTML"
+        return "内容"
+
     def _paint_thumb(self, p: QPainter, rect: QRectF, item: ClipboardItem, index: int):
         hovered = index == self._hovered_index
         dragging = index == self._dragging_index
@@ -774,6 +1001,21 @@ class PreviewBar(QWidget):
                     self.update()
             return
 
+        # Staging mode: handle card clicks
+        if self._mode == "staging":
+            if event.button() == Qt.MouseButton.RightButton:
+                idx = self._staging_card_at(pos)
+                if idx >= 0 and idx < len(self._staging_items):
+                    self._show_staging_context_menu(event.globalPosition().toPoint(), idx)
+                return
+            if event.button() == Qt.MouseButton.LeftButton:
+                idx = self._staging_card_at(pos)
+                if idx >= 0 and idx < len(self._staging_items):
+                    # Prepare for potential drag
+                    self._drag_start_pos = event.pos()
+                    self._drag_start_index = idx
+                return
+
         # Preview mode: right-click on thumbnail
         if event.button() == Qt.MouseButton.RightButton:
             idx = self._thumb_at(pos)
@@ -806,6 +1048,23 @@ class PreviewBar(QWidget):
             return
 
         if self._mode == "ball":
+            return
+
+        # Staging mode: hover tracking + drag detection
+        if self._mode == "staging":
+            idx = self._staging_card_at(pos)
+            if idx != self._hovered_index:
+                self._hovered_index = idx
+                self.update()
+            # Drag detection for staging cards
+            if self._drag_start_pos is not None and self._drag_start_index >= 0:
+                distance = (event.pos() - self._drag_start_pos).manhattanLength()
+                if distance > 8:
+                    staging_item = self._staging_items[self._drag_start_index]
+                    self._drag_start_pos = None
+                    from src.ui.drag_handler import DragHandler
+                    DragHandler.start_staging_drag(staging_item, self)
+                    self._drag_start_index = -1
             return
 
         # Preview: hover tracking
@@ -861,9 +1120,26 @@ class PreviewBar(QWidget):
         self._drag_start_pos = None
         self._drag_start_index = -1
 
+        # Staging mode: click (not drag) → copy to clipboard
+        if self._mode == "staging":
+            pos = event.position()
+            idx = self._staging_card_at(pos)
+            if idx >= 0 and idx < len(self._staging_items):
+                staging_id = self._staging_items[idx].get("id")
+                if staging_id:
+                    self.copy_item_requested.emit(staging_id)
+
     def mouseDoubleClickEvent(self, event):
         if self._mode == "ball":
             self.panel_show_requested.emit()
+            return
+        if self._mode == "staging":
+            # Double-click staging card → open file if applicable
+            idx = self._staging_card_at(event.position())
+            if idx >= 0 and idx < len(self._staging_items):
+                fp = self._staging_items[idx].get("file_path", "")
+                if fp and os.path.exists(fp):
+                    os.startfile(fp)
             return
         idx = self._thumb_at(event.position())
         if idx >= 0 and idx < len(self._items):
@@ -890,15 +1166,29 @@ class PreviewBar(QWidget):
             event.acceptProposedAction()
             self._drag_over = True
             self._ring_phase = 0.0
-            self._ring_timer.start(33)  # ~30fps
-            self.update()
+            # Morph to staging shelf if in ball mode
+            if self._mode == "ball" and not self._is_animating:
+                self._morph_to_staging()
+            elif self._mode == "staging":
+                self.update()
+            else:
+                self._ring_timer.start(33)
 
     def dragLeaveEvent(self, event):
         self._drag_over = False
         self._ring_timer.stop()
+        # Auto-collapse staging after a short delay
+        if self._mode == "staging" and not self._is_animating:
+            QTimer.singleShot(800, self._maybe_collapse_staging)
         self.update()
 
+    def _maybe_collapse_staging(self):
+        """Collapse staging back to ball if drag is no longer over."""
+        if not self._drag_over and self._mode == "staging" and not self._is_animating:
+            self._morph_to_ball()
+
     def dropEvent(self, event):
+        was_staging = self._mode == "staging"
         self._drag_over = False
         self._ring_timer.stop()
         # Success flash
@@ -908,7 +1198,17 @@ class PreviewBar(QWidget):
         if event.mimeData().hasUrls():
             paths = [u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()]
             if paths:
-                self.files_dropped.emit(paths)
+                if was_staging:
+                    self.staging_file_dropped.emit(paths)
+                else:
+                    self.files_dropped.emit(paths)
+            event.acceptProposedAction()
+        elif event.mimeData().hasText():
+            # Text content dropped → add to staging
+            if was_staging:
+                text = event.mimeData().text()
+                if text:
+                    self.staging_file_dropped.emit([text])
             event.acceptProposedAction()
 
     # ── Context menus ──
@@ -971,6 +1271,44 @@ class PreviewBar(QWidget):
                 return i
             y += VLIST_ITEM_H
         return -1
+
+    def _staging_card_at(self, pos: QPointF) -> int:
+        """Hit test: return staging card index at pos, or -1."""
+        if self._mode != "staging":
+            return -1
+        y_start = STAGING_HEADER_H + STAGING_PADDING
+        for i in range(len(self._staging_items[:STAGING_MAX_CARDS])):
+            col = i % STAGING_COLS
+            row = i // STAGING_COLS
+            cx = STAGING_PADDING + col * (STAGING_CARD_SIZE + STAGING_GAP)
+            cy = y_start + row * (STAGING_CARD_SIZE + STAGING_GAP)
+            card_rect = QRectF(cx, cy, STAGING_CARD_SIZE, STAGING_CARD_SIZE)
+            if card_rect.contains(pos):
+                return i
+        return -1
+
+    def _show_staging_context_menu(self, global_pos, index: int):
+        """Show context menu for a staging card."""
+        if index >= len(self._staging_items):
+            return
+        item = self._staging_items[index]
+        staging_id = item.get("id")
+        if not staging_id:
+            return
+
+        menu = QMenu(self)
+        copy_action = menu.addAction("📋 复制到剪贴板")
+        history_action = menu.addAction("📤 存回历史")
+        menu.addSeparator()
+        remove_action = menu.addAction("🗑 移除")
+
+        action = menu.exec(global_pos)
+        if action == copy_action:
+            self.copy_item_requested.emit(staging_id)
+        elif action == history_action:
+            self.remove_item_requested.emit(staging_id)
+        elif action == remove_action:
+            self.remove_item_requested.emit(staging_id)
 
     def _apply_edge_snap(self, pos: QPoint) -> QPoint:
         screen = QApplication.primaryScreen()
