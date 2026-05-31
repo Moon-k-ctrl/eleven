@@ -185,7 +185,21 @@ def main() -> None:
     engine = QQmlApplicationEngine()
     engine.addImportPath(str(BASE_DIR / "ui"))
     theme = ThemeSingleton()
+    # Load saved theme mode
+    try:
+        config_data = api_client._get("/api/config")
+        saved_theme = config_data.get("theme_mode", "dark")
+        theme.setThemeMode(saved_theme)
+    except Exception:
+        pass
     engine.rootContext().setContextProperty("Theme", theme)
+
+    # Theme toggle from bridge
+    def _on_theme_switch(status: str):
+        if status.startswith("theme:"):
+            mode = status.split(":", 1)[1]
+            theme.setThemeMode(mode)
+    bridge.statusChanged.connect(_on_theme_switch)
     engine.rootContext().setContextProperty("bridge", bridge)
     engine.rootContext().setContextProperty("clipboardModel", model)
     engine.rootContext().setContextProperty("stagingModel", staging_model)

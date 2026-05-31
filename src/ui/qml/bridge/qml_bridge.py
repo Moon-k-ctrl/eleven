@@ -596,6 +596,22 @@ class QmlBridge(QObject):
             logger.error(f"toggleMonitoring failed: {e}")
 
     @pyqtSlot()
+    def toggleTheme(self) -> None:
+        """Toggle between dark and light theme."""
+        try:
+            new_mode = "light" if self._get_theme_mode() == "dark" else "dark"
+            self._api._post("/api/config/update", {"theme_mode": new_mode})
+            self.statusChanged.emit(f"theme:{new_mode}")
+        except Exception as e:
+            logger.error(f"toggleTheme failed: {e}")
+
+    def _get_theme_mode(self) -> str:
+        """Get current theme mode from config."""
+        try:
+            data = self._api._get("/api/config")
+            return data.get("theme_mode", "dark")
+        except Exception:
+            return "dark"
     def togglePhrasesPanel(self) -> None:
         """Toggle the quick phrases panel visibility."""
         if self._root:

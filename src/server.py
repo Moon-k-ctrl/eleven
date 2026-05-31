@@ -371,6 +371,8 @@ def get_config():
         "max_items": config.max_items,
         "max_image_size": list(config.max_image_size),
         "jpeg_quality": config.jpeg_quality,
+        "clipboard_enabled": config.clipboard_enabled,
+        "theme_mode": config._config.get("theme_mode", "dark"),
     }
 
 
@@ -381,6 +383,16 @@ def update_config(body: ConfigUpdate):
     if body.max_items is not None:
         config.max_items = body.max_items
     return get_config()
+
+
+@app.post("/api/config/update")
+def update_config_raw(body: dict):
+    """Update arbitrary config keys."""
+    for key, value in body.items():
+        if key in config._config:
+            config._config[key] = value
+    config._save()
+    return {"ok": True}
 
 
 @app.post("/api/config/clipboard-enabled")

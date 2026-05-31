@@ -22,7 +22,8 @@ DEFAULT_CONFIG = {
     "max_items": 200,
     "max_image_size": [800, 800],
     "jpeg_quality": 85,
-    "clipboard_enabled": True,  # 默认开启剪贴板监控
+    "clipboard_enabled": True,
+    "theme_mode": "dark",
 }
 
 # 模式描述（用于 UI 提示）

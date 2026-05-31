@@ -67,6 +67,28 @@ Rectangle {
 
             Item { Layout.fillWidth: true }
 
+            // Theme toggle button
+            Rectangle {
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
+                color: "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: Theme.isDark ? "☀" : "🌙"
+                    font.pixelSize: 12
+                    color: themeToggleMouse.containsMouse ? Theme.textPrimary : "#8FB2C2"
+                }
+
+                MouseArea {
+                    id: themeToggleMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bridge.toggleTheme()
+                }
+            }
+
             // Minimize button
             Rectangle {
                 Layout.preferredWidth: 18
