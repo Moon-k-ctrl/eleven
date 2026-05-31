@@ -736,3 +736,56 @@ class QmlBridge(QObject):
     def onPreviewRequested(self, item: ClipboardItem) -> None:
         """Called externally (e.g. PreviewBar) to open preview."""
         self.previewRequested.emit(item)
+
+    # ── Backup / Restore / Stats ──
+
+    @pyqtSlot()
+    def exportBackup(self) -> None:
+        """Export all data to a JSON file."""
+        try:
+            import json
+            from PyQt6.QtWidgets import QFileDialog
+            backup = self._api.export_backup()
+            path, _ = QFileDialog.getSaveFileName(
+                None, "导出备份",
+                f"拾遗备份_{backup.get('exported_at', '')[:10]}.json",
+                "JSON 文件 (*.json)",
+            )
+            if path:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(backup, f, ensure_ascii=False, indent=2)
+                self.toastRequested.emit("备份导出成功", "success", False)
+        except Exception as e:
+            logger.error(f"exportBackup failed: {e}")
+            self.toastRequested.emit("备份导出失败", "error", False)
+
+    @pyqtSlot()
+    def importRestore(self) -> None:
+        """Import data from a JSON backup file."""
+        try:
+            import json
+            from PyQt6.QtWidgets import QFileDialog, QMessageBox
+            path, _ = QFileDialog.getOpenFileName(
+                None, "导入备份", "",
+                "JSON 文件 (*.json)",
+            )
+            if not path:
+                return
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            result = self._api.import_restore(data)
+            counts = result.get("counts", {})
+            msg = f"已导入: {counts.get('items', 0)} 条记录, {counts.get('tags', 0)} 个标签"
+            self.toastRequested.emit(msg, "success", False)
+            self.refreshList()
+        except Exception as e:
+            logger.error(f"importRestore failed: {e}")
+            self.toastRequested.emit("备份导入失败", "error", False)
+
+    @pyqtSlot(result=dict)
+    def getStats(self) -> dict:
+        """Get database statistics."""
+        try:
+            return self._api.get_stats()
+        except Exception:
+            return {}

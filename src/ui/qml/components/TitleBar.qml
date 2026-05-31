@@ -153,7 +153,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 42
-        color: Qt.rgba(0.039, 0.055, 0.071, 0.94)
+        color: Theme.bgPanelHeader
 
         RowLayout {
             anchors.fill: parent
@@ -212,11 +212,33 @@ Rectangle {
             ShiyiButton {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 58
+                text: "备份"
+                iconText: "💾"
+                onClicked: backupMenu.popup()
+            }
+
+            ShiyiButton {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 58
                 text: "清空"
                 iconText: "×"
                 danger: true
                 onClicked: bridge.clearAll()
             }
+        }
+    }
+
+    // Backup/Restore menu
+    Menu {
+        id: backupMenu
+
+        MenuItem {
+            text: "💾 导出备份 (JSON)"
+            onTriggered: bridge.exportBackup()
+        }
+        MenuItem {
+            text: "📂 导入备份 (JSON)"
+            onTriggered: bridge.importRestore()
         }
     }
 }

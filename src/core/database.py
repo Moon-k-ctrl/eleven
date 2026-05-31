@@ -1081,3 +1081,151 @@ class Database:
         with self._conn() as conn:
             row = conn.execute("SELECT COUNT(*) FROM quick_phrases").fetchone()
         return row[0]  # type: ignore
+
+    # ── Backup / Restore ──
+
+    def export_all(self) -> dict:
+        """Export all data as a JSON-serializable dict."""
+        with self._conn() as conn:
+            # Items (including trashed)
+            rows = conn.execute("SELECT * FROM clipboard_items ORDER BY id").fetchall()
+            items = []
+            for r in rows:
+                items.append({
+                    "id": r["id"], "content_type": r["content_type"],
+                    "content_text": r["content_text"], "content_html": r["content_html"],
+                    "file_path": r["file_path"], "source_app": r["source_app"],
+                    "is_pinned": r["is_pinned"], "is_favorite": r["is_favorite"],
+                    "group_id": r["group_id"], "thumbnail_path": r["thumbnail_path"],
+                    "content_hash": r["content_hash"], "category": r["category"],
+                    "source": r["source"], "project": r["project"],
+                    "is_starred": r["is_starred"], "metadata": r["metadata"],
+                    "use_count": r["use_count"] if "use_count" in r.keys() else 0,
+                    "is_deleted": r["is_deleted"] if "is_deleted" in r.keys() else "0",
+                    "deleted_at": r["deleted_at"] if "deleted_at" in r.keys() else None,
+                    "created_at": r["created_at"], "updated_at": r["updated_at"],
+                })
+
+            # Tags
+            tag_rows = conn.execute("SELECT * FROM tags ORDER BY id").fetchall()
+            tags = [dict(r) for r in tag_rows]
+
+            # Item-tag associations
+            it_rows = conn.execute("SELECT * FROM item_tags ORDER BY item_id, tag_id").fetchall()
+            item_tags = [{"item_id": r["item_id"], "tag_id": r["tag_id"]} for r in it_rows]
+
+            # Groups
+            group_rows = conn.execute("SELECT * FROM groups ORDER BY id").fetchall()
+            groups = [dict(r) for r in group_rows]
+
+            # Staging
+            staging_rows = conn.execute("SELECT * FROM staging_items ORDER BY id").fetchall()
+            staging = [dict(r) for r in staging_rows]
+
+            # Quick phrases
+            phrase_rows = conn.execute("SELECT * FROM quick_phrases ORDER BY id").fetchall()
+            phrases = [dict(r) for r in phrase_rows]
+
+        return {
+            "version": "4.1",
+            "exported_at": datetime.utcnow().isoformat(),
+            "items": items,
+            "tags": tags,
+            "item_tags": item_tags,
+            "groups": groups,
+            "staging_items": staging,
+            "quick_phrases": phrases,
+        }
+
+    def import_all(self, data: dict) -> dict:
+        """Import data from a backup dict. Returns counts of imported items."""
+        counts = {"items": 0, "tags": 0, "item_tags": 0, "staging": 0, "phrases": 0}
+
+        with self._conn() as conn:
+            # Import tags (skip duplicates)
+            for tag in data.get("tags", []):
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO tags (id, name, color, created_at) VALUES (?, ?, ?, ?)",
+                        (tag["id"], tag["name"], tag.get("color", "#4A90D9"), tag.get("created_at")),
+                    )
+                    counts["tags"] += 1
+                except sqlite3.IntegrityError:
+                    pass
+
+            # Import items (skip duplicates by content_hash)
+            for item in data.get("items", []):
+                ch = item.get("content_hash")
+                if ch:
+                    existing = conn.execute(
+                        "SELECT 1 FROM clipboard_items WHERE content_hash = ? LIMIT 1", (ch,)
+                    ).fetchone()
+                    if existing:
+                        continue
+                try:
+                    conn.execute(
+                        """INSERT INTO clipboard_items
+                           (content_type, content_text, content_html, file_path,
+                            source_app, is_pinned, is_favorite, group_id,
+                            thumbnail_path, content_hash, category,
+                            source, project, is_starred, metadata, use_count,
+                            is_deleted, deleted_at, created_at, updated_at)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (item["content_type"], item.get("content_text"), item.get("content_html"),
+                         item.get("file_path"), item.get("source_app"),
+                         item.get("is_pinned", 0), item.get("is_favorite", 0),
+                         item.get("group_id"), item.get("thumbnail_path"),
+                         item.get("content_hash"), item.get("category"),
+                         item.get("source", "clipboard"), item.get("project", "default"),
+                         item.get("is_starred", 0), item.get("metadata"),
+                         item.get("use_count", 0),
+                         item.get("is_deleted", "0"), item.get("deleted_at"),
+                         item.get("created_at"), item.get("updated_at")),
+                    )
+                    counts["items"] += 1
+                except sqlite3.IntegrityError:
+                    pass
+
+            # Import item-tag associations
+            for it in data.get("item_tags", []):
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO item_tags (item_id, tag_id) VALUES (?, ?)",
+                        (it["item_id"], it["tag_id"]),
+                    )
+                    counts["item_tags"] += 1
+                except sqlite3.IntegrityError:
+                    pass
+
+            # Import staging items
+            for s in data.get("staging_items", []):
+                try:
+                    conn.execute(
+                        """INSERT INTO staging_items
+                           (content_type, content_text, content_html, file_path,
+                            thumbnail_path, source_item_id, sort_order, created_at)
+                           VALUES (?,?,?,?,?,?,?,?)""",
+                        (s["content_type"], s.get("content_text"), s.get("content_html"),
+                         s.get("file_path"), s.get("thumbnail_path"),
+                         s.get("source_item_id"), s.get("sort_order", 0), s.get("created_at")),
+                    )
+                    counts["staging"] += 1
+                except sqlite3.IntegrityError:
+                    pass
+
+            # Import quick phrases
+            for p in data.get("quick_phrases", []):
+                try:
+                    conn.execute(
+                        """INSERT INTO quick_phrases
+                           (name, content, color, sort_order, use_count, created_at, updated_at)
+                           VALUES (?,?,?,?,?,?,?)""",
+                        (p["name"], p["content"], p.get("color", "#7CE0C3"),
+                         p.get("sort_order", 0), p.get("use_count", 0),
+                         p.get("created_at"), p.get("updated_at")),
+                    )
+                    counts["phrases"] += 1
+                except sqlite3.IntegrityError:
+                    pass
+
+        return counts

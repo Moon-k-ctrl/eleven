@@ -469,3 +469,17 @@ class ApiClient(QObject):
         """Use a phrase (increment count) and return its content."""
         result = self._post(f"/api/phrases/{phrase_id}/use")
         return result.get("content", "")
+
+    # ── Backup / Restore ──
+
+    def export_backup(self) -> dict:
+        """Export all data as a backup dict."""
+        return self._get("/api/backup")
+
+    def import_restore(self, data: dict) -> dict:
+        """Import data from a backup dict."""
+        return self._post("/api/restore", data)
+
+    def get_stats(self) -> dict:
+        """Get database statistics."""
+        return self._get("/api/stats")

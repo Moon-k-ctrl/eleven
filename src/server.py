@@ -664,6 +664,37 @@ def use_phrase(phrase_id: int):
     return {"ok": True, "content": target.get("content", "")}
 
 
+# ── Backup / Restore ──
+
+@app.get("/api/backup")
+def export_backup():
+    """Export all data as JSON backup."""
+    return db.export_all()
+
+
+@app.post("/api/restore")
+def import_restore(body: dict):
+    """Import data from a JSON backup."""
+    counts = db.import_all(body)
+    return {"ok": True, "counts": counts}
+
+
+@app.get("/api/stats")
+def get_stats():
+    """Get database statistics."""
+    return {
+        "total_items": db.count(),
+        "trashed_items": db.trash_count(),
+        "staging_items": db.staging_count(),
+        "tags": db.tag_count(),
+        "phrases": db.quick_phrase_count(),
+        "most_used": [
+            {"id": i.id, "preview": i.short_preview(30), "use_count": i.use_count}
+            for i in db.get_most_used(5)
+        ],
+    }
+
+
 # ── WebSocket ──
 
 @app.websocket("/ws")
