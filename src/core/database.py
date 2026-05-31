@@ -209,6 +209,15 @@ class Database:
                 "CREATE INDEX IF NOT EXISTS idx_deleted ON clipboard_items(is_deleted, deleted_at)"
             )
 
+            # v4.1 迁移：使用频率统计
+            try:
+                conn.execute("ALTER TABLE clipboard_items ADD COLUMN use_count INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_use_count ON clipboard_items(use_count DESC)"
+            )
+
             # v3.0 项目空间表
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS projects (
@@ -429,6 +438,28 @@ class Database:
                 "UPDATE clipboard_items SET is_starred = NOT is_starred, updated_at = ? WHERE id = ?",
                 (datetime.utcnow().isoformat(), item_id),
             )
+
+    def increment_use_count(self, item_id: int) -> None:
+        """Increment the usage counter for an item."""
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE clipboard_items SET use_count = use_count + 1, updated_at = ? WHERE id = ?",
+                (datetime.utcnow().isoformat(), item_id),
+            )
+
+    def get_most_used(self, limit: int = 20) -> list[ClipboardItem]:
+        """Get the most frequently used items."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT * FROM clipboard_items
+                   WHERE is_deleted != '1' AND use_count > 0
+                   ORDER BY use_count DESC, created_at DESC
+                   LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        items = [self._row_to_item(r) for r in rows]
+        self._attach_tags(items)
+        return items
 
     def search(self, query: str, limit: int = 50) -> list[ClipboardItem]:
         """Full-text search."""
@@ -708,6 +739,7 @@ class Database:
             project=row["project"] if "project" in keys else "default",
             is_starred=bool(int(row["is_starred"])) if "is_starred" in keys and row["is_starred"] is not None else False,
             metadata=row["metadata"] if "metadata" in keys else None,
+            use_count=int(row["use_count"]) if "use_count" in keys and row["use_count"] else 0,
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )

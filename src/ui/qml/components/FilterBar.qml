@@ -21,6 +21,7 @@ RowLayout {
         ListElement { key: "PDF"; label: "PDF" }
         ListElement { key: "PPT"; label: "PPT" }
         ListElement { key: "ARCHIVE"; label: "压缩" }
+        ListElement { key: "MOST_USED"; label: "⭐ 高频" }
     }
 
     Repeater {

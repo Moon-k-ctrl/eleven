@@ -86,6 +86,9 @@ class ClipboardManager(QObject):
         """Write an item back to system clipboard."""
         with self._lock:
             self._ignore_next = True
+        # Track usage frequency
+        if item.id:
+            self.db.increment_use_count(item.id)
         if item.content_type == ContentType.TEXT and item.content_text:
             set_clipboard_text(item.content_text)
         elif item.content_type == ContentType.FILES and item.content_text:

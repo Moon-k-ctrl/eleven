@@ -32,6 +32,7 @@ Rectangle {
     property string filePathDisplay: model.filePathDisplay || ""
     property string smartType: model.smartType || ""
     property string smartPreview: model.smartPreview || ""
+    property int useCount: model.useCount || 0
 
     // Selection state — uses selectedItemIds property (updates via _selectedItemIdsChanged signal)
     property bool isSelected: bridge.multiSelectMode && bridge.selectedItemIds.indexOf(itemId) >= 0
@@ -294,6 +295,16 @@ Rectangle {
                 visible: isStarred
                 text: Theme.iconStar
                 font.pixelSize: Theme.fontSizeXS
+                Layout.alignment: Qt.AlignRight
+            }
+
+            // Use count indicator
+            Text {
+                visible: useCount > 0
+                text: "×" + useCount
+                font.pixelSize: 9
+                font.family: Theme.fontFamilySecondary
+                color: useCount >= 10 ? Theme.accentGold : Theme.textPlaceholder
                 Layout.alignment: Qt.AlignRight
             }
         }

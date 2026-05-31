@@ -268,6 +268,12 @@ def copy_item(item_id: int):
     return {"ok": True}
 
 
+@app.get("/api/items/most-used")
+def get_most_used(limit: int = 20):
+    items = db.get_most_used(limit)
+    return {"items": [item_to_dict(i) for i in items]}
+
+
 @app.get("/api/items/{item_id}")
 def get_item(item_id: int):
     item = db.get_item_by_id(item_id)

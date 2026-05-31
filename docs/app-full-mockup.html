@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾遗 (ShiYi) — Full Application Mockup</title>
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS (exact match from theme_singleton.py)
+   ═══════════════════════════════════════════════ */
+:root {
+  /* Palette */
+  --bg-primary: #080B0F;
+  --bg-secondary: #10161C;
+  --bg-tertiary: #172029;
+  --bg-hover: #24313B;
+  --bg-active: #2E4050;
+  --bg-panel: #0C1116;
+  --bg-panel-header: #071016;
+  --surface-0: #FA080B0F;
+  --surface-1: #EB10161C;
+  --surface-2: #DC182129;
+
+  /* Text */
+  --text-primary: #F0F5F2;
+  --text-secondary: #A8B3BD;
+  --text-tertiary: #71808F;
+  --text-placeholder: #4A5568;
+  --text-inverse: #06100D;
+
+  /* Accent */
+  --accent-mint: #7CE0C3;
+  --accent-mint-light: #A8E8D8;
+  --accent-cyan: #66B8C7;
+  --accent-gold: #F2B84B;
+  --accent-green: #54D49E;
+
+  /* Status */
+  --status-online: #1FB84F;
+  --status-error: #F06464;
+
+  /* Type colors */
+  --type-text: #9FCBFF;
+  --type-image: #7CE0C3;
+  --type-word: #9EDDE8;
+  --type-excel: #54D49E;
+  --type-pdf: #FF9A9A;
+  --type-ppt: #FFD98A;
+  --type-archive: #A8B3BD;
+
+  /* Border */
+  --border: #14E1EEE7;
+  --border-hover: #29E1EEE7;
+  --line-soft: #14E1EEE7;
+  --line-strong: #29E1EEE7;
+
+  /* Shadow */
+  --shadow: #61000000;
+
+  /* Font */
+  --font-cn: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --font-ui: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --font-emoji: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+
+  /* Spacing */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 24px;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-full: 9999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-cn);
+  background: #050810;
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: auto;
+}
+
+/* ═══════════════════════════════════════
+   CANVAS — simulates desktop environment
+   ═══════════════════════════════════════ */
+.canvas {
+  position: relative;
+  width: 1400px;
+  height: 780px;
+  margin: 40px auto;
+  background: linear-gradient(160deg, #0B1219 0%, #0E151D 40%, #0A1018 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.04);
+  overflow: visible;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+}
+
+/* Desktop wallpaper subtle grid */
+.canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background-image:
+    radial-gradient(ellipse 600px 400px at 30% 50%, rgba(124,224,195,0.015) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 70% 60%, rgba(102,184,199,0.01) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Windows taskbar at bottom of canvas */
+.taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 44px;
+  background: rgba(8,11,15,0.92);
+  backdrop-filter: blur(20px);
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+}
+.taskbar-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: default;
+  position: relative;
+}
+.taskbar-icon.active {
+  background: rgba(124,224,195,0.12);
+}
+.taskbar-icon.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 14px;
+  height: 2px;
+  background: var(--accent-mint);
+  border-radius: 1px;
+}
+.taskbar-search {
+  width: 200px;
+  height: 30px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 15px;
+  margin: 0 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--text-placeholder);
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN PANEL — 430×620
+   ═══════════════════════════════════════════════ */
+.main-panel {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 430px;
+  height: 620px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.3),
+    0 18px 54px rgba(0,0,0,0.38),
+    0 0 80px rgba(124,224,195,0.03);
+  z-index: 10;
+}
+
+/* ── TitleBar ── */
+.titlebar {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--sp-md);
+  user-select: none;
+}
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-online);
+  box-shadow: 0 0 6px rgba(31,184,79,0.5);
+}
+.titlebar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+.titlebar-count {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-ui);
+  margin-left: 2px;
+}
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.titlebar-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
+  cursor: default;
+  transition: background 0.12s, color 0.12s;
+}
+.titlebar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+.titlebar-btn.close:hover {
+  background: rgba(240,100,100,0.2);
+  color: var(--status-error);
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-md);
+  gap: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.toolbar-btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-cn);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+.toolbar-btn.primary {
+  background: rgba(124,224,195,0.12);
+  color: var(--accent-mint);
+  border-color: rgba(124,224,195,0.25);
+}
+.toolbar-btn.primary:hover {
+  background: rgba(124,224,195,0.2);
+}
+.toolbar-btn.danger {
+  color: var(--status-error);
+  border-color: rgba(240,100,100,0.15);
+}
+.toolbar-btn.danger:hover {
+  background: rgba(240,100,100,0.12);
+}
+.toolbar-btn .icon {
+  font-size: 13px;
+  font-family: var(--font-emoji);
+}
+
+/* ── FilterBar ── */
+.filterbar {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-md);
+  gap: 4px;
+}
+.filter-pill {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-family: var(--font-cn);
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  cursor: default;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.filter-pill:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.04);
+}
+.filter-pill.active {
+  background: rgba(124,224,195,0.15);
+  color: var(--accent-mint);
+  font-weight: 500;
+}
+.filterbar-sort {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-cn);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+.filterbar-sort:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+}
+
+/* ── TagBar ── */
+.tagbar {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-md);
+  gap: 6px;
+}
+.tagbar-label {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  font-family: var(--font-cn);
+  margin-right: 2px;
+}
+.tag-chip {
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  font-size: 10px;
+  font-family: var(--font-cn);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: default;
+  transition: all 0.12s;
+  border: 1px solid transparent;
+}
+.tag-chip .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.tag-chip.inactive {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-tertiary);
+}
+.tag-chip.inactive:hover {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-secondary);
+}
+.tag-chip.active {
+  border-color: currentColor;
+}
+.tag-add {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  border: 1px dashed var(--text-placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-placeholder);
+  cursor: default;
+}
+.tag-add:hover {
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+}
+
+/* ── SearchBar ── */
+.searchbar {
+  height: 36px;
+  margin: 0 var(--sp-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+.searchbar:focus-within {
+  border-color: rgba(124,224,195,0.3);
+}
+.searchbar .search-icon {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+.searchbar input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  font-family: var(--font-cn);
+  color: var(--text-primary);
+}
+.searchbar input::placeholder {
+  color: var(--text-placeholder);
+}
+.searchbar .clear-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  cursor: default;
+  opacity: 0;
+}
+.searchbar.has-text .clear-btn {
+  opacity: 1;
+}
+
+/* ── StagingShelf ── */
+.staging-shelf {
+  margin: var(--sp-sm) var(--sp-md) 0;
+  background: rgba(255,255,255,0.025);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.staging-header {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-sm);
+  gap: 6px;
+}
+.staging-header .title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-cn);
+}
+.staging-header .count {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  font-family: var(--font-ui);
+}
+.staging-header .spacer { flex: 1; }
+.staging-header .collapse-btn,
+.staging-header .clear-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+.staging-header .collapse-btn:hover {
+  background: var(--bg-hover);
+}
+.staging-header .clear-btn {
+  width: auto;
+  padding: 0 6px;
+  font-size: 10px;
+  font-family: var(--font-cn);
+}
+.staging-header .clear-btn:hover {
+  background: rgba(240,100,100,0.1);
+  color: var(--status-error);
+}
+.staging-grid {
+  display: flex;
+  gap: 6px;
+  padding: 0 var(--sp-sm) var(--sp-sm);
+}
+.staging-card {
+  width: 96px;
+  height: 96px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: default;
+  transition: all 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.staging-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+.staging-card .card-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+.staging-card .card-label {
+  font-size: 8px;
+  color: var(--text-tertiary);
+  font-family: var(--font-cn);
+  max-width: 84px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.staging-card.image-thumb {
+  background: linear-gradient(135deg, #1a3a2e, var(--bg-tertiary));
+}
+.staging-card.image-thumb .card-icon {
+  font-size: 12px;
+}
+.staging-card.image-thumb .card-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* ── Main List ── */
+.list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124,224,195,0.2) transparent;
+}
+.list-container::-webkit-scrollbar {
+  width: 5px;
+}
+.list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.list-container::-webkit-scrollbar-thumb {
+  background: rgba(124,224,195,0.2);
+  border-radius: 3px;
+}
+.list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(124,224,195,0.35);
+}
+
+/* Time group section headers */
+.time-group {
+  padding: 6px var(--sp-md) 0;
+  position: relative;
+}
+.time-group-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.time-group-label .emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+.time-group-label .text {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  font-family: var(--font-cn);
+}
+.time-group::after {
+  content: '';
+  position: absolute;
+  left: var(--sp-sm);
+  right: var(--sp-sm);
+  bottom: 0;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+/* List items */
+.list-item {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-md);
+  gap: var(--sp-sm);
+  cursor: default;
+  transition: all 0.12s;
+  position: relative;
+}
+.list-item:hover {
+  background: rgba(124,224,195,0.075);
+  border: 1px solid rgba(124,224,195,0.18);
+  border-radius: var(--r-sm);
+}
+.list-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: var(--sp-md);
+  right: var(--sp-md);
+  height: 1px;
+  background: var(--line-soft);
+}
+.list-item:last-child::after {
+  display: none;
+}
+
+/* Type icon */
+.type-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.type-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.14;
+}
+.type-icon.text { color: var(--type-text); }
+.type-icon.text::before { background: var(--type-text); }
+.type-icon.image { color: var(--type-image); }
+.type-icon.image::before { background: var(--type-image); }
+.type-icon.word { color: var(--type-word); }
+.type-icon.word::before { background: var(--type-word); }
+.type-icon.excel { color: var(--type-excel); }
+.type-icon.excel::before { background: var(--type-excel); }
+.type-icon.pdf { color: var(--type-pdf); }
+.type-icon.pdf::before { background: var(--type-pdf); }
+.type-icon.html { color: var(--accent-cyan); }
+.type-icon.html::before { background: var(--accent-cyan); }
+
+/* Content column */
+.item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  padding: 10px 0;
+}
+.item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-cn);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Smart badges */
+.smart-badge {
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.smart-badge.code {
+  background: rgba(124,224,195,0.15);
+  color: var(--accent-mint);
+}
+.smart-badge.url {
+  background: rgba(102,184,199,0.15);
+  color: var(--accent-cyan);
+}
+.smart-badge.phone {
+  background: rgba(242,184,75,0.15);
+  color: var(--accent-gold);
+}
+
+/* Bottom meta row */
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-ui);
+}
+.item-meta .separator {
+  width: 1px;
+  height: 10px;
+  background: var(--border);
+}
+.item-tag {
+  height: 14px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,0.045);
+  font-size: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-cn);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Action indicators (right side) */
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.item-actions .pin {
+  font-size: 11px;
+}
+.item-actions .star {
+  font-size: 14px;
+  color: var(--accent-gold);
+}
+
+/* List inner wrapper for layout */
+.panel-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-bottom: var(--sp-md);
+}
+
+/* ═══════════════════════════════════════════════
+   FLOATING BALL (bottom-right, outside panel)
+   ═══════════════════════════════════════════════ */
+.floating-ball-wrapper {
+  position: absolute;
+  bottom: 70px;
+  right: 40px;
+  z-index: 20;
+}
+.floating-ball {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: relative;
+  cursor: default;
+}
+/* Shadow layers (5 concentric ellipses) */
+.floating-ball::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  z-index: -1;
+}
+.floating-ball .shadow-layer {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.floating-ball .shadow-layer:nth-child(1) {
+  inset: -20px;
+  background: rgba(84,212,158,0.09);
+}
+.floating-ball .shadow-layer:nth-child(2) {
+  inset: -16px;
+  background: rgba(84,212,158,0.14);
+}
+.floating-ball .shadow-layer:nth-child(3) {
+  inset: -12px;
+  background: rgba(84,212,158,0.18);
+}
+.floating-ball .shadow-layer:nth-child(4) {
+  inset: -8px;
+  background: rgba(84,212,158,0.22);
+}
+.floating-ball .shadow-layer:nth-child(5) {
+  inset: -4px;
+  background: rgba(84,212,158,0.26);
+}
+/* Ball gradient body */
+.ball-body {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-mint) 0%, #54D49E 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  z-index: 1;
+  overflow: hidden;
+}
+/* Jade specular highlight */
+.ball-body::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -5px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.12) 40%, transparent 70%);
+  pointer-events: none;
+}
+/* Badge */
+.ball-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--status-error);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-cn);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  z-index: 2;
+}
+/* Status dot */
+.ball-status {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--status-online);
+  border: 2px solid rgba(30,30,30,0.8);
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════
+   PREVIEW BAR (expanded floating ball)
+   ═══════════════════════════════════════════════ */
+.preview-bar {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(calc(-50% + 240px));
+  width: 320px;
+  border-radius: 16px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-1);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  z-index: 25;
+  overflow: hidden;
+}
+.preview-list {
+  padding: 12px;
+  padding-right: 52px;
+}
+.preview-item {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background 0.1s;
+}
+.preview-item:hover {
+  background: rgba(124,224,195,0.07);
+}
+.preview-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.preview-thumb .num {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: 7px;
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-ui);
+}
+.preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.preview-info {
+  flex: 1;
+  min-width: 0;
+}
+.preview-info .name {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-cn);
+}
+.preview-info .sub {
+  font-size: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-cn);
+}
+.preview-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.preview-action-btn {
+  width: 32px;
+  height: 20px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+  cursor: default;
+}
+.preview-action-btn:hover {
+  background: rgba(124,224,195,0.25);
+  color: var(--accent-mint);
+}
+.preview-action-count {
+  font-size: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-cn);
+}
+
+/* ═══════════════════════════════════════════════
+   CONTEXT MENU
+   ═══════════════════════════════════════════════ */
+.context-menu {
+  position: absolute;
+  width: 200px;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.2);
+  z-index: 50;
+}
+.ctx-item {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: default;
+  transition: all 0.1s;
+  font-family: var(--font-cn);
+}
+.ctx-item:hover {
+  background: rgba(124,224,195,0.15);
+  color: var(--accent-mint);
+}
+.ctx-item .ctx-icon {
+  font-size: 13px;
+  font-family: var(--font-emoji);
+  width: 18px;
+  text-align: center;
+}
+.ctx-separator {
+  height: 1px;
+  margin: 3px 8px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST NOTIFICATION
+   ═══════════════════════════════════════════════ */
+.toast {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-mint);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 60;
+}
+.toast .toast-icon {
+  font-size: 14px;
+  color: var(--accent-mint);
+}
+.toast .toast-text {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-cn);
+}
+.toast .toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 3px;
+  height: 2px;
+  border-radius: 0 0 10px 0;
+  background: linear-gradient(90deg, var(--accent-mint), var(--accent-green));
+  animation: toast-progress 3s linear forwards;
+}
+@keyframes toast-progress {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+/* ═══════════════════════════════════════════════
+   SYSTEM TRAY MENU
+   ═══════════════════════════════════════════════ */
+.tray-menu {
+  position: absolute;
+  width: 220px;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.2);
+  z-index: 50;
+}
+.tray-item {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: default;
+  transition: all 0.1s;
+  font-family: var(--font-cn);
+}
+.tray-item:hover {
+  background: rgba(124,224,195,0.12);
+  color: var(--accent-mint);
+}
+.tray-item .tray-icon {
+  font-size: 13px;
+  width: 18px;
+  text-align: center;
+  font-family: var(--font-emoji);
+}
+.tray-item .tray-check {
+  margin-left: auto;
+  color: var(--accent-mint);
+  font-size: 12px;
+}
+.tray-item .tray-arrow {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+.tray-separator {
+  height: 1px;
+  margin: 3px 8px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ═══════════════════════════════════════════════
+   ANNOTATION LABELS
+   ═══════════════════════════════════════════════ */
+.annotation {
+  position: absolute;
+  font-size: 9px;
+  color: var(--accent-mint);
+  background: rgba(124,224,195,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(124,224,195,0.15);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  font-family: var(--font-ui);
+  letter-spacing: 0.3px;
+}
+.annotation-line {
+  position: absolute;
+  background: rgba(124,224,195,0.2);
+  z-index: 99;
+}
+.annotation-line.horizontal {
+  height: 1px;
+}
+.annotation-line.vertical {
+  width: 1px;
+}
+</style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <!-- ═══════════════════════════════════════
+       MAIN PANEL
+       ═══════════════════════════════════════ -->
+  <div class="main-panel">
+    <div class="panel-inner">
+
+      <!-- TitleBar -->
+      <div class="titlebar">
+        <div class="titlebar-left">
+          <div class="status-dot"></div>
+          <span class="titlebar-title">拾遗</span>
+          <span class="titlebar-count">(156/200)</span>
+        </div>
+        <div class="titlebar-right">
+          <div class="titlebar-btn">−</div>
+          <div class="titlebar-btn close">×</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-btn"><span class="icon">⧉</span> 合并</div>
+        <div class="toolbar-btn primary"><span class="icon">◨</span> 预览栏</div>
+        <div class="toolbar-btn"><span class="icon">⚡</span> 短语</div>
+        <div class="toolbar-btn"><span class="icon">⇣</span> 导出</div>
+        <div class="toolbar-btn"><span class="icon">🗑</span> 回收站</div>
+        <div class="toolbar-btn danger"><span class="icon">×</span> 清空</div>
+      </div>
+
+      <!-- FilterBar -->
+      <div class="filterbar">
+        <div class="filter-pill active">全部</div>
+        <div class="filter-pill">文本</div>
+        <div class="filter-pill">图片</div>
+        <div class="filter-pill">Word</div>
+        <div class="filter-pill">Excel</div>
+        <div class="filter-pill">PDF</div>
+        <div class="filter-pill">PPT</div>
+        <div class="filter-pill">压缩</div>
+        <div class="filterbar-sort">最新优先 ▾</div>
+      </div>
+
+      <!-- TagBar -->
+      <div class="tagbar">
+        <span class="tagbar-label">标签</span>
+        <div class="tag-chip active" style="color:var(--accent-mint);">
+          <span class="dot" style="background:var(--accent-mint);"></span>工作
+        </div>
+        <div class="tag-chip active" style="color:var(--accent-cyan);">
+          <span class="dot" style="background:var(--accent-cyan);"></span>学习
+        </div>
+        <div class="tag-chip inactive">
+          <span class="dot" style="background:var(--accent-gold);"></span>重要
+        </div>
+        <div class="tag-chip inactive">
+          <span class="dot" style="background:#9FCBFF;"></span>链接
+        </div>
+        <div class="tag-chip inactive">
+          <span class="dot" style="background:#FF9A9A;"></span>紧急
+        </div>
+        <div class="tag-chip inactive">
+          <span class="dot" style="background:var(--accent-green);"></span>参考
+        </div>
+        <div class="tag-add">+</div>
+      </div>
+
+      <!-- SearchBar -->
+      <div class="searchbar has-text">
+        <span class="search-icon">🔍</span>
+        <input type="text" value="" placeholder="搜索剪贴内容...">
+        <div class="clear-btn">×</div>
+      </div>
+
+      <!-- StagingShelf -->
+      <div class="staging-shelf">
+        <div class="staging-header">
+          <span class="title">📥 暂存架</span>
+          <span class="count">3/20</span>
+          <span class="spacer"></span>
+          <div class="collapse-btn">▾</div>
+          <div class="clear-btn">清空</div>
+        </div>
+        <div class="staging-grid">
+          <div class="staging-card image-thumb">
+            <div style="width:80px;height:56px;background:linear-gradient(135deg,#1a3a2e,#174a3a);border-radius:4px;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:24px;">🖼️</span>
+            </div>
+            <span class="card-label">screenshot.png</span>
+          </div>
+          <div class="staging-card">
+            <span class="card-icon" style="color:var(--type-pdf);">P</span>
+            <span class="card-label">产品方案.pdf</span>
+          </div>
+          <div class="staging-card">
+            <span class="card-icon" style="color:var(--type-text);">T</span>
+            <span class="card-label">API 密钥片段...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main List (scrollable) -->
+      <div class="list-container">
+
+        <!-- ── 今天 ── -->
+        <div class="time-group">
+          <div class="time-group-label">
+            <span class="emoji">📅</span>
+            <span class="text">今天</span>
+          </div>
+        </div>
+
+        <!-- Item 1: TEXT + Code badge + pin -->
+        <div class="list-item">
+          <div class="type-icon text">T</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">项目需求文档.docx</span>
+              <span class="smart-badge code">⌨ Code</span>
+            </div>
+            <div class="item-meta">
+              <span>3分钟前</span>
+              <span class="separator"></span>
+              <span>📋</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <span class="pin">📌</span>
+          </div>
+        </div>
+
+        <!-- Item 2: IMAGE -->
+        <div class="list-item">
+          <div class="type-icon image" style="padding:0;overflow:hidden;">
+            <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a3a2e,#2a4a3a);display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:14px;">🖼️</span>
+            </div>
+          </div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">screenshot.png</span>
+            </div>
+            <div class="item-meta">
+              <span>15分钟前</span>
+              <span class="separator"></span>
+              <span>⌨️</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+        <!-- Item 3: TEXT + URL badge (hover state) -->
+        <div class="list-item" style="background:rgba(124,224,195,0.075);border:1px solid rgba(124,224,195,0.18);border-radius:6px;">
+          <div class="type-icon text">T</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">https://github.com/eleven-clip/...</span>
+              <span class="smart-badge url">🔗 URL</span>
+            </div>
+            <div class="item-meta">
+              <span>1小时前</span>
+              <span class="separator"></span>
+              <span>📋</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+        <!-- ── 昨天 ── -->
+        <div class="time-group">
+          <div class="time-group-label">
+            <span class="emoji">🕐</span>
+            <span class="text">昨天</span>
+          </div>
+        </div>
+
+        <!-- Item 4: WORD + tags -->
+        <div class="list-item">
+          <div class="type-icon word">W</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">会议纪要.docx</span>
+            </div>
+            <div class="item-meta">
+              <span class="item-tag">工作</span>
+              <span class="item-tag">会议</span>
+              <span class="separator" style="margin-left:4px;"></span>
+              <span>昨天 18:30</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+        <!-- Item 5: PDF + favorite star -->
+        <div class="list-item">
+          <div class="type-icon pdf">P</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">产品方案v2.pdf</span>
+            </div>
+            <div class="item-meta">
+              <span>昨天 14:20</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <span class="star">★</span>
+          </div>
+        </div>
+
+        <!-- ── 本周 ── -->
+        <div class="time-group">
+          <div class="time-group-label">
+            <span class="emoji">📆</span>
+            <span class="text">本周</span>
+          </div>
+        </div>
+
+        <!-- Item 6: EXCEL -->
+        <div class="list-item">
+          <div class="type-icon excel">E</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">数据报表.xlsx</span>
+            </div>
+            <div class="item-meta">
+              <span>周三 10:15</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+        <!-- Item 7: TEXT + Phone badge -->
+        <div class="list-item">
+          <div class="type-icon text">T</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">13812345678</span>
+              <span class="smart-badge phone">📱 Phone</span>
+            </div>
+            <div class="item-meta">
+              <span>周二 09:00</span>
+              <span class="separator"></span>
+              <span>📎</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+        <!-- ── 本月 ── -->
+        <div class="time-group">
+          <div class="time-group-label">
+            <span class="emoji">📋</span>
+            <span class="text">本月</span>
+          </div>
+        </div>
+
+        <!-- Item 8: HTML + tag -->
+        <div class="list-item">
+          <div class="type-icon html">🌐</div>
+          <div class="item-content">
+            <div class="item-title-row">
+              <span class="item-title">网页内容片段</span>
+            </div>
+            <div class="item-meta">
+              <span class="item-tag">参考</span>
+              <span class="separator" style="margin-left:4px;"></span>
+              <span>5月28日</span>
+            </div>
+          </div>
+          <div class="item-actions"></div>
+        </div>
+
+      </div><!-- /list-container -->
+
+    </div><!-- /panel-inner -->
+  </div><!-- /main-panel -->
+
+
+  <!-- ═══════════════════════════════════════
+       FLOATING BALL (bottom-right)
+       ═══════════════════════════════════════ -->
+  <div class="floating-ball-wrapper">
+    <div class="floating-ball">
+      <div class="shadow-layer"></div>
+      <div class="shadow-layer"></div>
+      <div class="shadow-layer"></div>
+      <div class="shadow-layer"></div>
+      <div class="shadow-layer"></div>
+      <div class="ball-body">📦</div>
+      <div class="ball-badge">5</div>
+      <div class="ball-status"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       PREVIEW BAR (expanded floating ball)
+       ═══════════════════════════════════════ -->
+  <div class="preview-bar">
+    <div class="preview-list">
+
+      <div class="preview-item">
+        <div class="preview-thumb" style="background:linear-gradient(135deg,#1a3a2e,#2a4a3a);">
+          <span class="num">1</span>
+          <span style="font-size:14px;">🖼️</span>
+        </div>
+        <div class="preview-info">
+          <div class="name">screenshot.png</div>
+          <div class="sub">图片 · 1920x1080</div>
+        </div>
+      </div>
+
+      <div class="preview-item">
+        <div class="preview-thumb">
+          <span class="num">2</span>
+          <span style="font-size:18px;font-weight:700;color:var(--type-pdf);">P</span>
+        </div>
+        <div class="preview-info">
+          <div class="name">产品方案v2.pdf</div>
+          <div class="sub">PDF · 2.4 MB</div>
+        </div>
+      </div>
+
+      <div class="preview-item">
+        <div class="preview-thumb">
+          <span class="num">3</span>
+          <span style="font-size:18px;font-weight:700;color:var(--type-text);">T</span>
+        </div>
+        <div class="preview-info">
+          <div class="name">项目需求文档.docx</div>
+          <div class="sub">文本 · 1280 字符</div>
+        </div>
+      </div>
+
+      <div class="preview-item">
+        <div class="preview-thumb">
+          <span class="num">4</span>
+          <span style="font-size:18px;font-weight:700;color:var(--type-word);">W</span>
+        </div>
+        <div class="preview-info">
+          <div class="name">会议纪要.docx</div>
+          <div class="sub">Word · 45 KB</div>
+        </div>
+      </div>
+
+      <div class="preview-item">
+        <div class="preview-thumb">
+          <span class="num">5</span>
+          <span style="font-size:18px;font-weight:700;color:var(--accent-cyan);">🌐</span>
+        </div>
+        <div class="preview-info">
+          <div class="name">https://github.com/...</div>
+          <div class="sub">URL · 86 字符</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action area (right column) -->
+    <div class="preview-actions">
+      <div class="preview-action-btn">▲</div>
+      <div class="preview-action-count">5</div>
+      <div class="preview-action-btn">✕</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       CONTEXT MENU (on item 3)
+       ═══════════════════════════════════════ -->
+  <div class="context-menu" style="top: 340px; left: 680px;">
+    <!-- Group 1: Quick actions -->
+    <div class="ctx-item"><span class="ctx-icon">📋</span> 复制</div>
+    <div class="ctx-item"><span class="ctx-icon">📝</span> 复制为纯文本</div>
+    <div class="ctx-item" style="background:rgba(124,224,195,0.15);color:var(--accent-mint);">
+      <span class="ctx-icon">✏️</span> 编辑
+    </div>
+
+    <div class="ctx-separator"></div>
+
+    <!-- Group 2: Organize -->
+    <div class="ctx-item"><span class="ctx-icon">🏷</span> 添加标签</div>
+    <div class="ctx-item"><span class="ctx-icon">📤</span> 导出此条</div>
+
+    <div class="ctx-separator"></div>
+
+    <!-- Group 3: Send -->
+    <div class="ctx-item"><span class="ctx-icon">◨</span> 发送到预览栏</div>
+    <div class="ctx-item"><span class="ctx-icon">📥</span> 发送到暂存架</div>
+
+    <div class="ctx-separator"></div>
+
+    <!-- Group 4: Mark -->
+    <div class="ctx-item"><span class="ctx-icon">☆</span> 收藏</div>
+    <div class="ctx-item"><span class="ctx-icon">☆</span> 星标</div>
+    <div class="ctx-item"><span class="ctx-icon">📌</span> 置顶</div>
+
+    <div class="ctx-separator"></div>
+
+    <!-- Group 5: Dangerous -->
+    <div class="ctx-item" style="color:var(--status-error);"><span class="ctx-icon">🗑</span> 删除</div>
+    <div class="ctx-item"><span class="ctx-icon">☑</span> 多选模式</div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       TOAST NOTIFICATION
+       ═══════════════════════════════════════ -->
+  <div class="toast">
+    <span class="toast-icon">✓</span>
+    <span class="toast-text">已复制到剪贴板</span>
+    <div class="toast-progress"></div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       SYSTEM TRAY MENU
+       ═══════════════════════════════════════ -->
+  <div class="tray-menu" style="bottom: 60px; right: 20px;">
+    <div class="tray-item"><span class="tray-icon">📋</span> 显示面板</div>
+    <div class="tray-item"><span class="tray-icon">📝</span> 打开详情面板</div>
+    <div class="tray-item"><span class="tray-icon">📦</span> 显示/隐藏悬浮球</div>
+    <div class="tray-item">
+      <span class="tray-icon">⏸</span> 暂停剪贴板监听
+      <span class="tray-check">✓</span>
+    </div>
+
+    <div class="tray-separator"></div>
+
+    <div class="tray-item"><span class="tray-icon">📊</span> 数据管理 <span class="tray-arrow">▸</span></div>
+    <div class="tray-item"><span class="tray-icon">💾</span> 存储模式 <span class="tray-arrow">▸</span></div>
+
+    <div class="tray-separator"></div>
+
+    <div class="tray-item"><span class="tray-icon">🔄</span> 开机自启</div>
+
+    <div class="tray-separator"></div>
+
+    <div class="tray-item" style="color:var(--status-error);"><span class="tray-icon">⏻</span> 退出</div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       ANNOTATION LABELS
+       ═══════════════════════════════════════ -->
+  <div class="annotation" style="top: 14px; left: 50%; transform: translateX(-50%);">MAIN PANEL 430×620</div>
+
+  <div class="annotation" style="top: 200px; left: 14px;">TITLEBAR + TOOLBAR</div>
+  <div class="annotation-line horizontal" style="top: 216px; left: 14px; width: 40px;"></div>
+
+  <div class="annotation" style="top: 290px; left: 14px;">FILTER + TAGS + SEARCH</div>
+
+  <div class="annotation" style="top: 380px; left: 14px;">STAGING SHELF</div>
+
+  <div class="annotation" style="top: 460px; left: 14px;">CLIPBOARD LIST</div>
+
+  <div class="annotation" style="bottom: 70px; right: 150px;">FLOATING BALL 80×80</div>
+
+  <div class="annotation" style="top: 20px; left: 720px;">PREVIEW BAR 320px</div>
+
+  <div class="annotation" style="top: 320px; left: 695px;">CONTEXT MENU</div>
+
+  <div class="annotation" style="bottom: 96px; left: 50%; transform: translateX(-50%);">TOAST</div>
+
+  <div class="annotation" style="bottom: 10px; right: 30px;">SYSTEM TRAY</div>
+
+  <!-- Taskbar -->
+  <div class="taskbar">
+    <div class="taskbar-icon">📋</div>
+    <div class="taskbar-icon active">📦</div>
+    <div class="taskbar-icon">🌐</div>
+    <div class="taskbar-search">
+      <span>🔍</span>
+      <span>搜索</span>
+    </div>
+    <div class="taskbar-icon">💬</div>
+    <div class="taskbar-icon">📁</div>
+  </div>
+
+</div>
+
+</body>
+</html>

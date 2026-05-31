@@ -230,6 +230,7 @@ class QClipboardListModel(QAbstractListModel):
     TimeGroupRole = Qt.ItemDataRole.UserRole + 19
     SmartTypeRole = Qt.ItemDataRole.UserRole + 20
     SmartPreviewRole = Qt.ItemDataRole.UserRole + 21
+    UseCountRole = Qt.ItemDataRole.UserRole + 22
 
     _ROLE_NAMES: dict[int, bytes] = {}
 
@@ -261,6 +262,7 @@ class QClipboardListModel(QAbstractListModel):
                 self.TimeGroupRole: b"timeGroup",
                 self.SmartTypeRole: b"smartType",
                 self.SmartPreviewRole: b"smartPreview",
+                self.UseCountRole: b"useCount",
             }
             QClipboardListModel._ROLE_NAMES = {
                 k: QByteArray(v) for k, v in names.items()
@@ -320,6 +322,8 @@ class QClipboardListModel(QAbstractListModel):
                 return _smart_type(item)
             case self.SmartPreviewRole:
                 return _smart_preview(item)
+            case self.UseCountRole:
+                return item.use_count or 0
         return None
 
     @pyqtSlot(list)

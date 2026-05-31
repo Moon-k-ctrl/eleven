@@ -211,14 +211,18 @@ class QmlBridge(QObject):
     def refreshList(self) -> None:
         """Fetch items from server with current filters and update model."""
         try:
-            items = self._api.search_with_filters(
-                query=self._search_query or None,
-                tag_ids=self._active_tag_ids or None,
-                category=self._current_category,
-                project=self._current_project,
-                sort=self._current_sort,
-                limit=200,
-            )
+            # Special category: most-used items
+            if self._current_category == "MOST_USED":
+                items = self._api.get_most_used(200)
+            else:
+                items = self._api.search_with_filters(
+                    query=self._search_query or None,
+                    tag_ids=self._active_tag_ids or None,
+                    category=self._current_category,
+                    project=self._current_project,
+                    sort=self._current_sort,
+                    limit=200,
+                )
             if self._model:
                 self._model.setItems(items)
             self._count = len(items)

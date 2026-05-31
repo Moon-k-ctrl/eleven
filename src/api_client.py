@@ -287,6 +287,11 @@ class ApiClient(QObject):
     def toggle_star(self, item_id: int) -> None:
         self._post(f"/api/items/{item_id}/star")
 
+    def get_most_used(self, limit: int = 20) -> list[ClipboardItem]:
+        """Get most frequently used items."""
+        data = self._get("/api/items/most-used", {"limit": limit})
+        return [_parse_item(d) for d in data.get("items", [])]
+
     def import_files(self, file_paths: list[str], source: str = "context-menu",
                      project: str = "default") -> dict:
         return self._post("/api/items/import", {

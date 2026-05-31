@@ -101,6 +101,7 @@ class ClipboardItem:
     project: str = "default"
     is_starred: bool = False
     metadata: Optional[str] = None  # JSON string for extended metadata
+    use_count: int = 0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
