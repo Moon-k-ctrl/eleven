@@ -30,6 +30,8 @@ Rectangle {
     property string displayType: model.displayType || "text"
     property string fileName: model.fileName || ""
     property string filePathDisplay: model.filePathDisplay || ""
+    property string smartType: model.smartType || ""
+    property string smartPreview: model.smartPreview || ""
 
     // Selection state — uses selectedItemIds property (updates via _selectedItemIdsChanged signal)
     property bool isSelected: bridge.multiSelectMode && bridge.selectedItemIds.indexOf(itemId) >= 0
@@ -137,17 +139,71 @@ Rectangle {
             Layout.fillHeight: true
             spacing: 2
 
-            // Main title: fileName (bold)
-            Text {
+            // Main title: fileName (bold) + smart badge
+            RowLayout {
                 Layout.fillWidth: true
-                text: fileName
-                font.pixelSize: Theme.fontSizeLG
-                font.weight: Theme.fontBold
-                font.family: Theme.fontFamilyPrimary
-                color: Theme.textPrimary
-                elide: Text.ElideRight
-                maximumLineCount: 1
+                spacing: Theme.spacingXS
                 Layout.alignment: Qt.AlignBottom
+
+                Text {
+                    Layout.fillWidth: true
+                    text: fileName
+                    font.pixelSize: Theme.fontSizeLG
+                    font.weight: Theme.fontBold
+                    font.family: Theme.fontFamilyPrimary
+                    color: Theme.textPrimary
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                }
+
+                // Smart content type badge
+                Rectangle {
+                    visible: smartType !== ""
+                    width: smartBadgeText.implicitWidth + Theme.spacingXS * 2
+                    height: 16
+                    radius: 8
+                    color: {
+                        switch (smartType) {
+                            case "url": return Qt.rgba(0.4, 0.72, 0.78, 0.15)
+                            case "email": return Qt.rgba(0.62, 0.87, 1.0, 0.15)
+                            case "phone": return Qt.rgba(0.95, 0.72, 0.29, 0.15)
+                            case "color": return Qt.rgba(0.49, 0.88, 0.76, 0.15)
+                            case "json": return Qt.rgba(0.95, 0.72, 0.29, 0.15)
+                            case "code": return Qt.rgba(0.49, 0.88, 0.76, 0.15)
+                            default: return Qt.rgba(1, 1, 1, 0.05)
+                        }
+                    }
+
+                    Text {
+                        id: smartBadgeText
+                        anchors.centerIn: parent
+                        text: {
+                            switch (smartType) {
+                                case "url": return "🔗 URL"
+                                case "email": return "✉ Email"
+                                case "phone": return "📱 Phone"
+                                case "color": return "🎨 Color"
+                                case "json": return "{ } JSON"
+                                case "code": return "⌨ Code"
+                                default: return smartType
+                            }
+                        }
+                        font.pixelSize: 8
+                        font.family: Theme.fontFamilySecondary
+                        font.weight: Theme.fontBold
+                        color: {
+                            switch (smartType) {
+                                case "url": return Theme.accentCyan
+                                case "email": return "#9FCBFF"
+                                case "phone": return Theme.accentGold
+                                case "color": return Theme.accentMint
+                                case "json": return Theme.accentGold
+                                case "code": return Theme.accentMint
+                                default: return Theme.textTertiary
+                            }
+                        }
+                    }
+                }
             }
 
             // Bottom row: filePathDisplay + time + source + tags
@@ -267,43 +323,74 @@ Rectangle {
         }
     }
 
-    // Context menu
+    // Context menu — enhanced with logical groups
     Menu {
         id: contextMenu
 
+        // ── 快捷操作 ──
         MenuItem {
-            text: "复制"
+            text: "📋  复制"
             onTriggered: bridge.copyItem(itemId)
         }
         MenuItem {
-            text: "预览"
-            onTriggered: bridge.requestPreview(itemId)
+            text: "📝  复制为纯文本"
+            visible: contentType === "HTML"
+            onTriggered: bridge.copyAsPlainText(itemId)
         }
         MenuItem {
-            text: "发送到预览栏"
+            text: "✏️  编辑"
+            onTriggered: bridge.editItem(itemId)
+        }
+
+        MenuSeparator {}
+
+        // ── 整理 ──
+        MenuItem {
+            text: "🏷  添加标签"
+            onTriggered: bridge.showTagDialog(itemId)
+        }
+        MenuItem {
+            text: "📤  导出此条"
+            onTriggered: bridge.exportSingleItem(itemId)
+        }
+
+        MenuSeparator {}
+
+        // ── 发送 ──
+        MenuItem {
+            text: "◨  发送到预览栏"
             onTriggered: bridge.sendToPreviewBar(itemId)
         }
-        MenuSeparator {}
         MenuItem {
-            text: isFavorite ? "取消收藏" : "收藏"
+            text: "📥  发送到暂存架"
+            onTriggered: bridge.addToStaging(itemId)
+        }
+
+        MenuSeparator {}
+
+        // ── 标记 ──
+        MenuItem {
+            text: isFavorite ? "★  取消收藏" : "☆  收藏"
             onTriggered: bridge.toggleFavorite(itemId)
         }
         MenuItem {
-            text: isStarred ? "取消星标" : "星标"
+            text: isStarred ? "⭐  取消星标" : "☆  星标"
             onTriggered: bridge.toggleStar(itemId)
         }
         MenuItem {
-            text: isPinned ? "取消置顶" : "置顶"
+            text: isPinned ? "📌  取消置顶" : "📌  置顶"
             onTriggered: bridge.togglePin(itemId)
         }
+
         MenuSeparator {}
+
+        // ── 危险操作 ──
         MenuItem {
-            text: "删除"
+            text: "🗑  删除"
             onTriggered: bridge.deleteItem(itemId)
         }
-        MenuSeparator {}
         MenuItem {
-            text: "多选模式"
+            text: "☑  多选模式"
             onTriggered: {
                 if (!bridge.multiSelectMode) bridge.toggleMultiSelect()
                 bridge.toggleItemSelection(itemId)

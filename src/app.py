@@ -176,6 +176,10 @@ def main() -> None:
     model = QClipboardListModel()
     bridge.set_model(model)
 
+    from src.ui.qml.bridge.staging_model import QStagingListModel
+    staging_model = QStagingListModel()
+    bridge.set_staging_model(staging_model)
+
     from PyQt6.QtQml import QQmlApplicationEngine
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
     engine = QQmlApplicationEngine()
@@ -184,6 +188,7 @@ def main() -> None:
     engine.rootContext().setContextProperty("Theme", theme)
     engine.rootContext().setContextProperty("bridge", bridge)
     engine.rootContext().setContextProperty("clipboardModel", model)
+    engine.rootContext().setContextProperty("stagingModel", staging_model)
 
     # Log QML warnings/errors
     def _on_qml_warnings(warnings):
@@ -210,10 +215,45 @@ def main() -> None:
     preview_bar.files_dropped.connect(
         lambda paths: (api_client.import_files(paths, "drag-drop"), bridge.refreshList())
     )
+
+    # Staging shelf: file dropped onto staging → import directly to staging
+    def _on_staging_file_dropped(paths):
+        for path in paths:
+            try:
+                from pathlib import Path as P
+                p = P(path)
+                if p.exists():
+                    api_client.import_files([path], "drag-drop")
+                    items = api_client.get_items(limit=1)
+                    if items:
+                        api_client.add_to_staging(items[0].id)
+                else:
+                    # Text content dropped directly
+                    api_client.import_text(path, source="drag-drop")
+                    items = api_client.get_items(limit=1)
+                    if items:
+                        api_client.add_to_staging(items[0].id)
+            except Exception:
+                logger.error(f"Failed to add to staging: {path}", exc_info=True)
+        # Refresh both QML model and PreviewBar
+        bridge.refreshStaging()
+        staging = api_client.get_staging_items()
+        preview_bar.set_staging_items(staging)
+
+    preview_bar.staging_file_dropped.connect(_on_staging_file_dropped)
+
+    # Sync staging changes from QML bridge → PreviewBar
+    bridge.stagingChanged.connect(
+        lambda: preview_bar.set_staging_items(api_client.get_staging_items())
+    )
+
     def _sync_preview_bar():
         preview_bar.update_badge(api_client.get_count())
         items = api_client.search_with_filters(limit=50)
         preview_bar.set_items(items)
+        # Sync staging items
+        staging = api_client.get_staging_items()
+        preview_bar.set_staging_items(staging)
 
     api_client.items_changed.connect(_sync_preview_bar)
     # QML panel signals → preview bar

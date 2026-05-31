@@ -257,9 +257,11 @@ def test_init_db_existing_db():
         path = Path(td) / "test.db"
         db1 = Database(path)
         db1.create_tag("existing")
+        db1.close()
         # Re-open: should not raise
         db2 = Database(path)
         assert len(db2.get_all_tags()) == 1
+        db2.close()
 
 
 # ── Tag Dataclass ──

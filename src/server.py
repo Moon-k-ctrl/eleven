@@ -236,12 +236,12 @@ def get_status():
 def get_items(limit: int = 50, cursor: Optional[int] = None,
               tag_id: Optional[int] = None, q: Optional[str] = None,
               category: Optional[str] = None, group_id: Optional[int] = None,
-              project: Optional[str] = None):
+              project: Optional[str] = None, sort: str = "newest"):
     if tag_id is not None or q is not None or category is not None or group_id is not None or project is not None:
         tag_ids = [tag_id] if tag_id is not None else None
         items = manager.search_with_filters(
             query=q, tag_ids=tag_ids, group_id=group_id,
-            category=category, project=project, limit=limit,
+            category=category, project=project, sort_mode=sort, limit=limit,
         )
         return {"items": [item_to_dict(i) for i in items]}
     items = db.get_items_cursor(last_id=cursor, limit=limit)
@@ -261,17 +261,19 @@ def search_items(q: str, limit: int = 50):
 
 @app.post("/api/items/{item_id}/copy")
 def copy_item(item_id: int):
-    # 找到指定 ID 的项目
-    all_items = db.get_items(limit=200, offset=0)
-    target = None
-    for item in all_items:
-        if item.id == item_id:
-            target = item
-            break
+    target = db.get_item_by_id(item_id)
     if not target:
         raise HTTPException(status_code=404, detail="Item not found")
     manager.copy_to_clipboard(target)
     return {"ok": True}
+
+
+@app.get("/api/items/{item_id}")
+def get_item(item_id: int):
+    item = db.get_item_by_id(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item_to_dict(item)
 
 
 @app.delete("/api/items/{item_id}")
@@ -301,9 +303,8 @@ def star_item(item_id: int):
 @app.post("/api/items/batch-delete")
 def batch_delete(body: dict):
     item_ids = body.get("item_ids", [])
-    for item_id in item_ids:
-        manager.delete_item(item_id)
-    return {"ok": True, "deleted": len(item_ids)}
+    deleted = db.delete_items_batch([int(i) for i in item_ids])
+    return {"ok": True, "deleted": deleted}
 
 
 @app.post("/api/items/paste")
@@ -490,6 +491,159 @@ def add_item_tag(item_id: int, body: ItemTagAction):
 def remove_item_tag(item_id: int, tag_id: int):
     manager.remove_tag_from_item(item_id, tag_id)
     return {"ok": True}
+
+
+# ── Staging Shelf (暂存架) ──
+
+class StagingAddRequest(BaseModel):
+    item_id: int  # 来源历史记录 ID
+
+
+@app.get("/api/staging")
+def get_staging():
+    items = db.get_staging_items()
+    return {"items": items, "count": len(items)}
+
+
+@app.post("/api/staging")
+def add_to_staging(body: StagingAddRequest):
+    """Add a clipboard history item to the staging shelf."""
+    source = db.get_item_by_id(body.item_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source item not found")
+    # Check capacity
+    if db.staging_count() >= 20:
+        raise HTTPException(status_code=400, detail="Staging shelf is full (max 20)")
+    # Check duplicate
+    existing = db.get_staging_items()
+    for s in existing:
+        if s.get("source_item_id") == body.item_id:
+            return {"ok": True, "id": s["id"], "duplicate": True}
+    sid = db.add_staging_item(
+        content_type=source.content_type.value,
+        content_text=source.content_text,
+        content_html=source.content_html,
+        file_path=source.file_path,
+        thumbnail_path=source.thumbnail_path,
+        source_item_id=source.id,
+    )
+    return {"ok": True, "id": sid}
+
+
+@app.delete("/api/staging/{staging_id}")
+def remove_from_staging(staging_id: int):
+    db.remove_staging_item(staging_id)
+    return {"ok": True}
+
+
+@app.post("/api/staging/clear")
+def clear_staging():
+    db.clear_staging_items()
+    return {"ok": True}
+
+
+@app.post("/api/staging/{staging_id}/to-history")
+def staging_to_history(staging_id: int):
+    """Move a staging item back to clipboard history."""
+    staging = db.get_staging_item_by_id(staging_id)
+    if not staging:
+        raise HTTPException(status_code=404, detail="Staging item not found")
+    content_type = staging.get("content_type", "TEXT")
+    try:
+        ct = ContentType(content_type)
+    except ValueError:
+        ct = ContentType.TEXT
+    item = ClipboardItem(
+        content_type=ct,
+        content_text=staging.get("content_text"),
+        content_html=staging.get("content_html"),
+        file_path=staging.get("file_path"),
+        thumbnail_path=staging.get("thumbnail_path"),
+        source="staging",
+    )
+    from src.models.clipboard_item import classify_item
+    item.category = classify_item(item)
+    db.insert_item(item)
+    db.remove_staging_item(staging_id)
+    return {"ok": True}
+
+
+# ── Trash (回收站) ──
+
+@app.get("/api/trash")
+def get_trash(limit: int = 100):
+    items = db.get_trashed_items(limit)
+    return {"items": [item_to_dict(i) for i in items], "count": len(items)}
+
+
+@app.post("/api/trash/{item_id}/restore")
+def restore_from_trash(item_id: int):
+    db.restore_item(item_id)
+    return {"ok": True}
+
+
+@app.delete("/api/trash/{item_id}")
+def permanent_delete(item_id: int):
+    db.permanent_delete_item(item_id)
+    return {"ok": True}
+
+
+@app.post("/api/trash/empty")
+def empty_trash():
+    count = db.empty_trash()
+    return {"ok": True, "deleted": count}
+
+
+@app.get("/api/trash/count")
+def trash_count():
+    return {"count": db.trash_count()}
+
+
+# ── Quick Phrases (常用短语) ──
+
+class PhraseRequest(BaseModel):
+    name: str
+    content: str
+    color: str = "#7CE0C3"
+
+
+@app.get("/api/phrases")
+def get_phrases():
+    phrases = db.get_quick_phrases()
+    return {"phrases": phrases, "count": len(phrases)}
+
+
+@app.post("/api/phrases")
+def create_phrase(body: PhraseRequest):
+    pid = db.add_quick_phrase(body.name, body.content, body.color)
+    return {"ok": True, "id": pid}
+
+
+@app.put("/api/phrases/{phrase_id}")
+def update_phrase(phrase_id: int, body: PhraseRequest):
+    db.update_quick_phrase(phrase_id, body.name, body.content, body.color)
+    return {"ok": True}
+
+
+@app.delete("/api/phrases/{phrase_id}")
+def delete_phrase(phrase_id: int):
+    db.delete_quick_phrase(phrase_id)
+    return {"ok": True}
+
+
+@app.post("/api/phrases/{phrase_id}/use")
+def use_phrase(phrase_id: int):
+    """Record phrase usage and return content for copying."""
+    phrases = db.get_quick_phrases()
+    target = None
+    for p in phrases:
+        if p.get("id") == phrase_id:
+            target = p
+            break
+    if not target:
+        raise HTTPException(status_code=404, detail="Phrase not found")
+    db.increment_phrase_usage(phrase_id)
+    return {"ok": True, "content": target.get("content", "")}
 
 
 # ── WebSocket ──

@@ -15,6 +15,7 @@ Window {
 
     // Public API for Python bridge
     property alias searchBar: searchBar
+    property bool showPhrases: false
 
     signal previewBarToggle()
     signal exportRequested()
@@ -49,6 +50,9 @@ Window {
                 onCategorySelected: function(category) {
                     bridge.setCategory(category)
                 }
+                onSortSelected: function(sort) {
+                    bridge.setSort(sort)
+                }
             }
 
             TagBar {
@@ -68,6 +72,13 @@ Window {
                 Layout.fillWidth: true
             }
 
+            // ── Staging Shelf (暂存架) ──
+            StagingShelf {
+                id: stagingShelf
+                Layout.fillWidth: true
+                visible: stagingModel.count > 0 || stagingShelf.expanded
+            }
+
             // Main list with drop overlay
             Item {
                 Layout.fillWidth: true
@@ -76,12 +87,20 @@ Window {
                 ClipboardListView {
                     id: listView
                     anchors.fill: parent
+                    visible: !showPhrases
+                }
+
+                // Quick phrases panel
+                QuickPhrasesPanel {
+                    id: phrasesPanel
+                    anchors.fill: parent
+                    visible: showPhrases
                 }
 
                 // Empty state overlay
                 EmptyState {
                     anchors.centerIn: parent
-                    visible: clipboardModel.count === 0
+                    visible: clipboardModel.count === 0 && !showPhrases
                 }
 
                 // Drop overlay
@@ -101,6 +120,9 @@ Window {
         function onItemsChanged() {
             // Refresh tag bar when items change
             tagBar.refreshTags()
+        }
+        function onStagingChanged() {
+            // Staging shelf auto-updates via model
         }
     }
 

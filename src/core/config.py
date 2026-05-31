@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
     "max_items": 200,
     "max_image_size": [800, 800],
     "jpeg_quality": 85,
-    "clipboard_enabled": False,  # v3.0 默认关闭剪贴板监控（中转站模式）
+    "clipboard_enabled": True,  # 默认开启剪贴板监控
 }
 
 # 模式描述（用于 UI 提示）
@@ -94,6 +94,10 @@ class Config:
     @max_items.setter
     def max_items(self, value: int) -> None:
         """Set max items limit."""
+        if not isinstance(value, int) or value < 10:
+            raise ValueError("max_items must be an integer >= 10")
+        if value > 10000:
+            raise ValueError("max_items must be <= 10000")
         self._config["max_items"] = value
         self._save()
 

@@ -248,8 +248,9 @@ class ApiClient(QObject):
                             group_id: Optional[int] = None,
                             category: Optional[str] = None,
                             project: Optional[str] = None,
+                            sort: str = "newest",
                             limit: int = 50) -> list[ClipboardItem]:
-        params: dict = {"limit": limit}
+        params: dict = {"limit": limit, "sort": sort}
         if query:
             params["q"] = query
         if tag_ids and len(tag_ids) == 1:
@@ -302,6 +303,14 @@ class ApiClient(QObject):
     def batch_delete(self, item_ids: list[int]) -> int:
         result = self._post("/api/items/batch-delete", {"item_ids": item_ids})
         return result.get("deleted", 0)
+
+    def get_item_by_id(self, item_id: int) -> Optional[ClipboardItem]:
+        """Get a single item by ID."""
+        try:
+            data = self._get(f"/api/items/{item_id}")
+            return _parse_item(data)
+        except Exception:
+            return None
 
     def paste_from_clipboard(self) -> bool:
         """Read system clipboard and add as new item via API."""
@@ -386,3 +395,72 @@ class ApiClient(QObject):
 
     def delete_project(self, project_id: int) -> None:
         self._delete(f"/api/projects/{project_id}")
+
+    # ── Staging Shelf (暂存架) ──
+
+    def get_staging_items(self) -> list[dict]:
+        data = self._get("/api/staging")
+        return data.get("items", [])
+
+    def add_to_staging(self, item_id: int) -> bool:
+        result = self._post("/api/staging", {"item_id": item_id})
+        return result.get("ok", False)
+
+    def remove_from_staging(self, staging_id: int) -> bool:
+        result = self._delete(f"/api/staging/{staging_id}")
+        return result.get("ok", False)
+
+    def clear_staging(self) -> None:
+        self._post("/api/staging/clear")
+
+    def staging_to_history(self, staging_id: int) -> bool:
+        result = self._post(f"/api/staging/{staging_id}/to-history")
+        return result.get("ok", False)
+
+    # ── Trash (回收站) ──
+
+    def get_trash(self, limit: int = 100) -> list[ClipboardItem]:
+        data = self._get("/api/trash", {"limit": limit})
+        return [_parse_item(d) for d in data.get("items", [])]
+
+    def restore_from_trash(self, item_id: int) -> bool:
+        result = self._post(f"/api/trash/{item_id}/restore")
+        return result.get("ok", False)
+
+    def permanent_delete(self, item_id: int) -> bool:
+        result = self._delete(f"/api/trash/{item_id}")
+        return result.get("ok", False)
+
+    def empty_trash(self) -> int:
+        result = self._post("/api/trash/empty")
+        return result.get("deleted", 0)
+
+    def trash_count(self) -> int:
+        try:
+            data = self._get("/api/trash/count")
+            return data.get("count", 0)
+        except Exception:
+            return 0
+
+    # ── Quick Phrases (常用短语) ──
+
+    def get_phrases(self) -> list[dict]:
+        data = self._get("/api/phrases")
+        return data.get("phrases", [])
+
+    def create_phrase(self, name: str, content: str, color: str = "#7CE0C3") -> int:
+        result = self._post("/api/phrases", {"name": name, "content": content, "color": color})
+        return result.get("id", 0)
+
+    def update_phrase(self, phrase_id: int, name: str, content: str, color: str = "#7CE0C3") -> bool:
+        result = self._put(f"/api/phrases/{phrase_id}", {"name": name, "content": content, "color": color})
+        return result.get("ok", False)
+
+    def delete_phrase(self, phrase_id: int) -> bool:
+        result = self._delete(f"/api/phrases/{phrase_id}")
+        return result.get("ok", False)
+
+    def use_phrase(self, phrase_id: int) -> str:
+        """Use a phrase (increment count) and return its content."""
+        result = self._post(f"/api/phrases/{phrase_id}/use")
+        return result.get("content", "")

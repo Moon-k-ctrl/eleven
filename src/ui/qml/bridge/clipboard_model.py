@@ -102,6 +102,110 @@ def _source_icon(source: str) -> str:
     return _SOURCE_ICONS.get(source, "📋")
 
 
+def _time_group(ts: str | datetime | None) -> str:
+    """Derive a time group label from a timestamp."""
+    if ts is None:
+        return "更早"
+    if isinstance(ts, str):
+        try:
+            ts = datetime.fromisoformat(ts)
+        except ValueError:
+            return "更早"
+    now = datetime.utcnow()
+    delta = now - ts
+    if delta.total_seconds() < 0:
+        return "今天"
+    if delta.days == 0:
+        return "今天"
+    if delta.days == 1:
+        return "昨天"
+    if delta.days <= 7:
+        return "本周"
+    if delta.days <= 30:
+        return "本月"
+    return "更早"
+
+
+    first_lines = stripped[:500].lower()
+    for kw in _CODE_KEYWORDS:
+        if kw in first_lines:
+            return "code"
+    return "default"
+
+
+import re as _re
+
+_URL_RE = _re.compile(r"https?://\S+")
+_EMAIL_RE = _re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+_PHONE_RE = _re.compile(r"(?:\+?86)?1[3-9]\d{9}")
+_COLOR_RE = _re.compile(r"#[0-9a-fA-F]{6}\b")
+_JSON_RE = _re.compile(r"^\s*[\{\[]")
+_CODE_KEYWORDS = {"def ", "class ", "import ", "function ", "const ", "let ", "var ", "return ", "if ", "for "}
+
+
+def _smart_type(item: ClipboardItem) -> str:
+    """Detect smart content type from text."""
+    if item.content_type != ContentType.TEXT or not item.content_text:
+        return ""
+    text = item.content_text.strip()
+    if _URL_RE.match(text):
+        return "url"
+    if _EMAIL_RE.fullmatch(text):
+        return "email"
+    if _PHONE_RE.fullmatch(text.replace(" ", "").replace("-", "")):
+        return "phone"
+    if _COLOR_RE.fullmatch(text):
+        return "color"
+    if _JSON_RE.match(text) and len(text) > 2:
+        try:
+            import json
+            json.loads(text)
+            return "json"
+        except (json.JSONDecodeError, ValueError):
+            pass
+    for kw in _CODE_KEYWORDS:
+        if kw in text:
+            return "code"
+    return ""
+
+
+def _smart_preview(item: ClipboardItem) -> str:
+    """Generate smart preview text based on detected type."""
+    if item.content_type != ContentType.TEXT or not item.content_text:
+        return ""
+    text = item.content_text.strip()
+    st = _smart_type(item)
+    if st == "url":
+        m = _URL_RE.search(text)
+        if m:
+            url = m.group(0)
+            from urllib.parse import urlparse
+            try:
+                domain = urlparse(url).netloc
+                return domain or url[:40]
+            except Exception:
+                return url[:40]
+    elif st == "email":
+        return text
+    elif st == "phone":
+        return text
+    elif st == "color":
+        return text
+    elif st == "json":
+        try:
+            import json
+            obj = json.loads(text)
+            if isinstance(obj, dict):
+                keys = list(obj.keys())[:2]
+                return "{ " + ", ".join(keys) + ", ... }"
+        except Exception:
+            pass
+    elif st == "code":
+        first_line = text.split("\n")[0][:40]
+        return first_line
+    return ""
+
+
 class QClipboardListModel(QAbstractListModel):
     """List model exposing named roles for QML delegates."""
 
@@ -123,6 +227,9 @@ class QClipboardListModel(QAbstractListModel):
     DisplayTypeRole = Qt.ItemDataRole.UserRole + 16
     FileNameRole = Qt.ItemDataRole.UserRole + 17
     FilePathDisplayRole = Qt.ItemDataRole.UserRole + 18
+    TimeGroupRole = Qt.ItemDataRole.UserRole + 19
+    SmartTypeRole = Qt.ItemDataRole.UserRole + 20
+    SmartPreviewRole = Qt.ItemDataRole.UserRole + 21
 
     _ROLE_NAMES: dict[int, bytes] = {}
 
@@ -151,6 +258,9 @@ class QClipboardListModel(QAbstractListModel):
                 self.DisplayTypeRole: b"displayType",
                 self.FileNameRole: b"fileName",
                 self.FilePathDisplayRole: b"filePathDisplay",
+                self.TimeGroupRole: b"timeGroup",
+                self.SmartTypeRole: b"smartType",
+                self.SmartPreviewRole: b"smartPreview",
             }
             QClipboardListModel._ROLE_NAMES = {
                 k: QByteArray(v) for k, v in names.items()
@@ -204,6 +314,12 @@ class QClipboardListModel(QAbstractListModel):
                 return _extract_filename(item)
             case self.FilePathDisplayRole:
                 return _file_path_display(item)
+            case self.TimeGroupRole:
+                return _time_group(item.created_at)
+            case self.SmartTypeRole:
+                return _smart_type(item)
+            case self.SmartPreviewRole:
+                return _smart_preview(item)
         return None
 
     @pyqtSlot(list)

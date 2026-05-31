@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+import threading
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +20,7 @@ class Database:
 
     def __init__(self, db_path: Optional[Path] = None, config: Optional[Config] = None):
         self.config = config or Config()
+        self._lock = threading.Lock()
 
         if db_path:
             self.db_path = db_path
@@ -29,31 +31,41 @@ class Database:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._conn_ref: Optional[sqlite3.Connection] = None
+        self._init_connection()
         self.init_db()
+
+    def _init_connection(self) -> None:
+        """Create and configure the reusable database connection."""
+        conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        self._conn_ref = conn
+
+    def close(self) -> None:
+        """Close the database connection. Call before cleanup."""
+        with self._lock:
+            if self._conn_ref:
+                try:
+                    self._conn_ref.close()
+                except Exception:
+                    pass
+                self._conn_ref = None
+
+    def __del__(self) -> None:
+        self.close()
 
     @contextmanager
     def _conn(self) -> Generator[sqlite3.Connection, None, None]:
-        # 内存模式复用连接，持久模式每次新建
-        if self.db_path == ":memory:":
-            if self._conn_ref is None:
-                self._conn_ref = sqlite3.connect(":memory:", check_same_thread=False)
-                self._conn_ref.row_factory = sqlite3.Row
-            conn = self._conn_ref
+        """Yield the shared connection, protected by a lock."""
+        with self._lock:
             try:
-                yield conn
-                conn.commit()
+                yield self._conn_ref
+                self._conn_ref.commit()
             except Exception:
-                conn.rollback()
+                self._conn_ref.rollback()
                 raise
-        else:
-            conn = sqlite3.connect(str(self.db_path))
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA journal_mode=WAL")
-            try:
-                yield conn
-                conn.commit()
-            finally:
-                conn.close()
 
     def init_db(self) -> None:
         """Create tables if they don't exist."""
@@ -107,14 +119,48 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_item_tags_item ON item_tags(item_id);
                 CREATE INDEX IF NOT EXISTS idx_item_tags_tag  ON item_tags(tag_id);
             """)
-            # FTS5 全文搜索
+            # FTS5 全文搜索（standalone，手动同步）
             try:
                 conn.execute("""
                     CREATE VIRTUAL TABLE IF NOT EXISTS clipboard_fts
-                    USING fts5(content_text, content='clipboard_items', content_rowid='id')
+                    USING fts5(search_text)
                 """)
             except sqlite3.OperationalError:
                 pass  # FTS5 不可用时跳过
+
+            # 迁移：重建 FTS 索引（v4.0 升级后首次运行）
+            try:
+                # 检查旧 FTS 表是否有 content_text 列（旧格式）
+                cursor = conn.execute("PRAGMA table_info(clipboard_fts)")
+                cols = [row[1] for row in cursor.fetchall()]
+                if "content_text" in cols or (cols and "search_text" not in cols):
+                    # 旧格式，重建
+                    conn.execute("DROP TABLE IF EXISTS clipboard_fts")
+                    conn.execute("""
+                        CREATE VIRTUAL TABLE clipboard_fts
+                        USING fts5(search_text)
+                    """)
+                    # 重新填充
+                    import re
+                    rows = conn.execute(
+                        "SELECT id, content_text, content_html FROM clipboard_items"
+                    ).fetchall()
+                    for row in rows:
+                        parts = []
+                        if row["content_text"]:
+                            parts.append(row["content_text"])
+                        if row["content_html"]:
+                            stripped = re.sub(r"<[^>]+>", " ", row["content_html"])
+                            stripped = re.sub(r"\s+", " ", stripped).strip()
+                            if stripped and stripped != row["content_text"]:
+                                parts.append(stripped)
+                        if parts:
+                            conn.execute(
+                                "INSERT INTO clipboard_fts(rowid, search_text) VALUES (?, ?)",
+                                (row["id"], " ".join(parts)),
+                            )
+            except sqlite3.OperationalError:
+                pass
 
             # 插入默认分组
             conn.execute("""
@@ -150,6 +196,19 @@ class Database:
                 "CREATE INDEX IF NOT EXISTS idx_starred ON clipboard_items(is_starred, created_at DESC)"
             )
 
+            # v4.0 迁移：软删除支持
+            for col, default in [
+                ("is_deleted", "0"),
+                ("deleted_at", "NULL"),
+            ]:
+                try:
+                    conn.execute(f"ALTER TABLE clipboard_items ADD COLUMN {col} TEXT DEFAULT {default}")
+                except sqlite3.OperationalError:
+                    pass  # 列已存在
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_deleted ON clipboard_items(is_deleted, deleted_at)"
+            )
+
             # v3.0 项目空间表
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS projects (
@@ -163,6 +222,56 @@ class Database:
             conn.execute("""
                 INSERT OR IGNORE INTO projects (id, name) VALUES (1, 'default')
             """)
+
+            # v4.0 暂存架表
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS staging_items (
+                    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                    content_type   TEXT NOT NULL,
+                    content_text   TEXT,
+                    content_html   TEXT,
+                    file_path      TEXT,
+                    thumbnail_path TEXT,
+                    source_item_id INTEGER,
+                    sort_order     INTEGER DEFAULT 0,
+                    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_staging_order ON staging_items(sort_order, created_at DESC)"
+            )
+
+            # v4.0 常用短语表
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS quick_phrases (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name        TEXT NOT NULL,
+                    content     TEXT NOT NULL,
+                    color       TEXT DEFAULT '#7CE0C3',
+                    sort_order  INTEGER DEFAULT 0,
+                    use_count   INTEGER DEFAULT 0,
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_phrases_order ON quick_phrases(sort_order, use_count DESC)"
+            )
+
+    @staticmethod
+    def _build_search_text(content_text: Optional[str], content_html: Optional[str]) -> Optional[str]:
+        """Build combined search text from plain text and HTML."""
+        import re
+        parts: list[str] = []
+        if content_text:
+            parts.append(content_text)
+        if content_html:
+            # Strip HTML tags to get searchable plain text
+            stripped = re.sub(r"<[^>]+>", " ", content_html)
+            stripped = re.sub(r"\s+", " ", stripped).strip()
+            if stripped and stripped != content_text:
+                parts.append(stripped)
+        return " ".join(parts) if parts else None
 
     def insert_item(self, item: ClipboardItem) -> int:
         """Insert a new clipboard item, return its id."""
@@ -185,12 +294,13 @@ class Database:
                     now, now,
                 ),
             )
-            # 同步 FTS
-            if item.content_text:
+            # 同步 FTS：索引 content_text + 去标签后的 content_html
+            search_text = self._build_search_text(item.content_text, item.content_html)
+            if search_text:
                 try:
                     conn.execute(
-                        "INSERT INTO clipboard_fts(rowid, content_text) VALUES (?, ?)",
-                        (cur.lastrowid, item.content_text),
+                        "INSERT INTO clipboard_fts(rowid, search_text) VALUES (?, ?)",
+                        (cur.lastrowid, search_text),
                     )
                 except sqlite3.OperationalError:
                     pass
@@ -198,11 +308,11 @@ class Database:
 
     def get_items(self, limit: int = 50, offset: int = 0,
                   pinned_first: bool = True) -> list[ClipboardItem]:
-        """Fetch clipboard items, newest first (pinned on top)."""
+        """Fetch clipboard items, newest first (pinned on top). Excludes trashed."""
         order = "is_pinned DESC, created_at DESC" if pinned_first else "created_at DESC"
         with self._conn() as conn:
             rows = conn.execute(
-                f"SELECT * FROM clipboard_items ORDER BY {order} LIMIT ? OFFSET ?",
+                f"SELECT * FROM clipboard_items WHERE is_deleted != '1' ORDER BY {order} LIMIT ? OFFSET ?",
                 (limit, offset),
             ).fetchall()
         items = [self._row_to_item(r) for r in rows]
@@ -210,12 +320,94 @@ class Database:
         return items
 
     def delete_item(self, item_id: int) -> None:
+        """Soft-delete: move to trash."""
+        now = datetime.utcnow().isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE clipboard_items SET is_deleted = '1', deleted_at = ? WHERE id = ?",
+                (now, item_id),
+            )
+
+    def restore_item(self, item_id: int) -> None:
+        """Restore a soft-deleted item from trash."""
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE clipboard_items SET is_deleted = '0', deleted_at = NULL WHERE id = ?",
+                (item_id,),
+            )
+
+    def permanent_delete_item(self, item_id: int) -> None:
+        """Permanently delete an item (from trash)."""
         with self._conn() as conn:
             conn.execute("DELETE FROM clipboard_items WHERE id = ?", (item_id,))
             try:
                 conn.execute("DELETE FROM clipboard_fts WHERE rowid = ?", (item_id,))
             except sqlite3.OperationalError:
                 pass
+
+    def get_trashed_items(self, limit: int = 100) -> list[ClipboardItem]:
+        """Get soft-deleted items (trash/recycle bin)."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT * FROM clipboard_items
+                   WHERE is_deleted = '1'
+                   ORDER BY deleted_at DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        items = [self._row_to_item(r) for r in rows]
+        self._attach_tags(items)
+        return items
+
+    def empty_trash(self) -> int:
+        """Permanently delete all trashed items. Returns count deleted."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT id FROM clipboard_items WHERE is_deleted = '1'"
+            ).fetchall()
+            ids = [r["id"] for r in rows]
+            if ids:
+                placeholders = ",".join("?" * len(ids))
+                conn.execute(
+                    f"DELETE FROM clipboard_items WHERE id IN ({placeholders})", ids
+                )
+                try:
+                    conn.execute(
+                        f"DELETE FROM clipboard_fts WHERE rowid IN ({placeholders})", ids
+                    )
+                except sqlite3.OperationalError:
+                    pass
+            return len(ids)
+
+    def cleanup_old_trash(self, days: int = 30) -> int:
+        """Permanently delete items trashed more than `days` ago. Returns count."""
+        import datetime as dt
+        cutoff = (datetime.utcnow() - dt.timedelta(days=days)).isoformat()
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT id FROM clipboard_items WHERE is_deleted = '1' AND deleted_at < ?",
+                (cutoff,),
+            ).fetchall()
+            ids = [r["id"] for r in rows]
+            if ids:
+                placeholders = ",".join("?" * len(ids))
+                conn.execute(
+                    f"DELETE FROM clipboard_items WHERE id IN ({placeholders})", ids
+                )
+                try:
+                    conn.execute(
+                        f"DELETE FROM clipboard_fts WHERE rowid IN ({placeholders})", ids
+                    )
+                except sqlite3.OperationalError:
+                    pass
+            return len(ids)
+
+    def trash_count(self) -> int:
+        """Count items in trash."""
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM clipboard_items WHERE is_deleted = '1'"
+            ).fetchone()
+        return row[0]  # type: ignore
 
     def toggle_pin(self, item_id: int) -> None:
         with self._conn() as conn:
@@ -250,10 +442,12 @@ class Database:
                     (query, limit),
                 ).fetchall()
             except sqlite3.OperationalError:
-                # FTS 不可用时 fallback 到 LIKE
+                # FTS 不可用时 fallback 到 LIKE（同时搜 text 和 html）
                 rows = conn.execute(
-                    "SELECT * FROM clipboard_items WHERE content_text LIKE ? ORDER BY created_at DESC LIMIT ?",
-                    (f"%{query}%", limit),
+                    """SELECT * FROM clipboard_items
+                       WHERE content_text LIKE ? OR content_html LIKE ?
+                       ORDER BY created_at DESC LIMIT ?""",
+                    (f"%{query}%", f"%{query}%", limit),
                 ).fetchall()
         items = [self._row_to_item(r) for r in rows]
         self._attach_tags(items)
@@ -270,16 +464,18 @@ class Database:
 
     def count(self) -> int:
         with self._conn() as conn:
-            row = conn.execute("SELECT COUNT(*) FROM clipboard_items").fetchone()
+            row = conn.execute(
+                "SELECT COUNT(*) FROM clipboard_items WHERE is_deleted != '1'"
+            ).fetchone()
         return row[0]  # type: ignore
 
     def delete_oldest_non_pinned(self, count: int) -> None:
-        """Delete the oldest non-pinned items."""
+        """Soft-delete the oldest non-pinned items (FIFO eviction)."""
+        now = datetime.utcnow().isoformat()
         with self._conn() as conn:
-            # 获取要删除的行 ID
             rows = conn.execute(
                 """SELECT id FROM clipboard_items
-                   WHERE is_pinned = 0
+                   WHERE is_pinned = 0 AND is_deleted != '1'
                    ORDER BY created_at ASC
                    LIMIT ?""",
                 (count,),
@@ -288,14 +484,9 @@ class Database:
             if ids:
                 placeholders = ",".join("?" * len(ids))
                 conn.execute(
-                    f"DELETE FROM clipboard_items WHERE id IN ({placeholders})", ids
+                    f"UPDATE clipboard_items SET is_deleted = '1', deleted_at = ? WHERE id IN ({placeholders})",
+                    [now] + ids,
                 )
-                try:
-                    conn.execute(
-                        f"DELETE FROM clipboard_fts WHERE rowid IN ({placeholders})", ids
-                    )
-                except sqlite3.OperationalError:
-                    pass
 
     def clear_all(self) -> None:
         with self._conn() as conn:
@@ -339,12 +530,12 @@ class Database:
 
     def get_items_by_group(self, group_id: Optional[int], limit: int = 50,
                            offset: int = 0) -> list[ClipboardItem]:
-        """Get items filtered by group."""
+        """Get items filtered by group. Excludes trashed."""
         with self._conn() as conn:
             if group_id is None:
                 rows = conn.execute(
                     """SELECT * FROM clipboard_items
-                       WHERE group_id IS NULL
+                       WHERE group_id IS NULL AND is_deleted != '1'
                        ORDER BY is_pinned DESC, created_at DESC
                        LIMIT ? OFFSET ?""",
                     (limit, offset),
@@ -352,7 +543,7 @@ class Database:
             else:
                 rows = conn.execute(
                     """SELECT * FROM clipboard_items
-                       WHERE group_id = ?
+                       WHERE group_id = ? AND is_deleted != '1'
                        ORDER BY is_pinned DESC, created_at DESC
                        LIMIT ? OFFSET ?""",
                     (group_id, limit, offset),
@@ -375,11 +566,12 @@ class Database:
 
     def get_items_cursor(self, last_id: Optional[int] = None,
                          limit: int = 50) -> list[ClipboardItem]:
-        """Get items using cursor-based pagination for better performance."""
+        """Get items using cursor-based pagination. Excludes trashed."""
         with self._conn() as conn:
             if last_id is None:
                 rows = conn.execute(
                     """SELECT * FROM clipboard_items
+                       WHERE is_deleted != '1'
                        ORDER BY is_pinned DESC, created_at DESC, id DESC
                        LIMIT ?""",
                     (limit,),
@@ -387,7 +579,7 @@ class Database:
             else:
                 rows = conn.execute(
                     """SELECT * FROM clipboard_items
-                       WHERE id < ?
+                       WHERE id < ? AND is_deleted != '1'
                        ORDER BY is_pinned DESC, created_at DESC, id DESC
                        LIMIT ?""",
                     (last_id, limit),
@@ -484,11 +676,12 @@ class Database:
             new_id = cur.lastrowid
 
             # 同步 FTS
-            if merged_text:
+            search_text = self._build_search_text(merged_text, merged_html)
+            if search_text:
                 try:
                     conn.execute(
-                        "INSERT INTO clipboard_fts(rowid, content_text) VALUES (?, ?)",
-                        (new_id, merged_text),
+                        "INSERT INTO clipboard_fts(rowid, search_text) VALUES (?, ?)",
+                        (new_id, search_text),
                     )
                 except sqlite3.OperationalError:
                     pass
@@ -624,12 +817,12 @@ class Database:
 
     def get_items_by_tag(self, tag_id: int, limit: int = 50,
                          offset: int = 0) -> list[ClipboardItem]:
-        """Get items filtered by tag."""
+        """Get items filtered by tag. Excludes trashed."""
         with self._conn() as conn:
             rows = conn.execute(
                 """SELECT c.* FROM clipboard_items c
                    JOIN item_tags it ON c.id = it.item_id
-                   WHERE it.tag_id = ?
+                   WHERE it.tag_id = ? AND c.is_deleted != '1'
                    ORDER BY c.is_pinned DESC, c.created_at DESC
                    LIMIT ? OFFSET ?""",
                 (tag_id, limit, offset),
@@ -668,9 +861,10 @@ class Database:
                             group_id: Optional[int] = None,
                             category: Optional[str] = None,
                             project: Optional[str] = None,
+                            sort_mode: str = "newest",
                             limit: int = 50) -> list[ClipboardItem]:
-        """Combined search + tag + group + category filter."""
-        conditions: list[str] = []
+        """Combined search + tag + group + category filter. Excludes trashed."""
+        conditions: list[str] = ["c.is_deleted != '1'"]
         params: list = []
 
         # FTS or LIKE search
@@ -691,7 +885,8 @@ class Database:
         else:
             base = "SELECT c.* FROM clipboard_items c"
             if query:
-                conditions.append("c.content_text LIKE ?")
+                conditions.append("(c.content_text LIKE ? OR c.content_html LIKE ?)")
+                params.append(f"%{query}%")
                 params.append(f"%{query}%")
 
         # Tag filter: item must have ALL specified tags
@@ -717,7 +912,17 @@ class Database:
             params.append(project)
 
         where = " AND ".join(conditions) if conditions else "1=1"
-        order = "ORDER BY rank" if (use_fts and query) else "ORDER BY c.is_pinned DESC, c.created_at DESC"
+        # Sort order
+        if use_fts and query:
+            order = "ORDER BY rank"
+        elif sort_mode == "oldest":
+            order = "ORDER BY c.is_pinned DESC, c.created_at ASC"
+        elif sort_mode == "type":
+            order = "ORDER BY c.is_pinned DESC, c.content_type, c.created_at DESC"
+        elif sort_mode == "source":
+            order = "ORDER BY c.is_pinned DESC, c.source_app, c.created_at DESC"
+        else:
+            order = "ORDER BY c.is_pinned DESC, c.created_at DESC"
 
         sql = f"{base} WHERE {where} {order} LIMIT ?"
         params.append(limit)
@@ -727,3 +932,120 @@ class Database:
         items = [self._row_to_item(r) for r in rows]
         self._attach_tags(items)
         return items
+
+    # ── 批量操作 ──
+
+    def delete_items_batch(self, item_ids: list[int]) -> int:
+        """Soft-delete multiple items (move to trash). Returns count."""
+        if not item_ids:
+            return 0
+        now = datetime.utcnow().isoformat()
+        placeholders = ",".join("?" * len(item_ids))
+        with self._conn() as conn:
+            conn.execute(
+                f"UPDATE clipboard_items SET is_deleted = '1', deleted_at = ? WHERE id IN ({placeholders})",
+                [now] + item_ids,
+            )
+        return len(item_ids)
+
+    # ── 暂存架操作 ──
+
+    def get_staging_items(self, limit: int = 20) -> list[dict]:
+        """Get all staging items, ordered by sort_order then created_at."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM staging_items ORDER BY sort_order DESC, created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def add_staging_item(self, content_type: str, content_text: Optional[str] = None,
+                         content_html: Optional[str] = None,
+                         file_path: Optional[str] = None,
+                         thumbnail_path: Optional[str] = None,
+                         source_item_id: Optional[int] = None) -> int:
+        """Add an item to the staging shelf. Returns the new staging item id."""
+        now = datetime.utcnow().isoformat()
+        with self._conn() as conn:
+            cur = conn.execute(
+                """INSERT INTO staging_items
+                   (content_type, content_text, content_html, file_path,
+                    thumbnail_path, source_item_id, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (content_type, content_text, content_html, file_path,
+                 thumbnail_path, source_item_id, now),
+            )
+            return cur.lastrowid  # type: ignore
+
+    def remove_staging_item(self, staging_id: int) -> None:
+        """Remove a single item from the staging shelf."""
+        with self._conn() as conn:
+            conn.execute("DELETE FROM staging_items WHERE id = ?", (staging_id,))
+
+    def clear_staging_items(self) -> None:
+        """Remove all items from the staging shelf."""
+        with self._conn() as conn:
+            conn.execute("DELETE FROM staging_items")
+
+    def staging_count(self) -> int:
+        """Count items currently in the staging shelf."""
+        with self._conn() as conn:
+            row = conn.execute("SELECT COUNT(*) FROM staging_items").fetchone()
+        return row[0]  # type: ignore
+
+    def get_staging_item_by_id(self, staging_id: int) -> Optional[dict]:
+        """Get a single staging item by id."""
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM staging_items WHERE id = ?", (staging_id,)
+            ).fetchone()
+        return dict(row) if row else None
+
+    # ── 常用短语操作 ──
+
+    def get_quick_phrases(self, limit: int = 50) -> list[dict]:
+        """Get all quick phrases, ordered by use_count then sort_order."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM quick_phrases ORDER BY use_count DESC, sort_order DESC, created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def add_quick_phrase(self, name: str, content: str, color: str = "#7CE0C3") -> int:
+        """Add a quick phrase. Returns the new id."""
+        now = datetime.utcnow().isoformat()
+        with self._conn() as conn:
+            cur = conn.execute(
+                "INSERT INTO quick_phrases (name, content, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (name, content, color, now, now),
+            )
+            return cur.lastrowid  # type: ignore
+
+    def update_quick_phrase(self, phrase_id: int, name: str, content: str, color: str = "#7CE0C3") -> None:
+        """Update a quick phrase."""
+        now = datetime.utcnow().isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE quick_phrases SET name = ?, content = ?, color = ?, updated_at = ? WHERE id = ?",
+                (name, content, color, now, phrase_id),
+            )
+
+    def delete_quick_phrase(self, phrase_id: int) -> None:
+        """Delete a quick phrase."""
+        with self._conn() as conn:
+            conn.execute("DELETE FROM quick_phrases WHERE id = ?", (phrase_id,))
+
+    def increment_phrase_usage(self, phrase_id: int) -> None:
+        """Increment use count for a phrase."""
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE quick_phrases SET use_count = use_count + 1 WHERE id = ?",
+                (phrase_id,),
+            )
+
+    def quick_phrase_count(self) -> int:
+        """Count total quick phrases."""
+        with self._conn() as conn:
+            row = conn.execute("SELECT COUNT(*) FROM quick_phrases").fetchone()
+        return row[0]  # type: ignore

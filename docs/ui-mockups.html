@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾遗 — UI Mockup: 6 Features</title>
+<style>
+/* ─── Design Tokens (from theme_singleton.py) ─── */
+:root {
+  --bg-primary: #080B0F;
+  --bg-secondary: #10161C;
+  --bg-tertiary: #172029;
+  --bg-hover: #24313B;
+  --bg-active: #2E4050;
+  --bg-panel: #0C1116;
+  --surface-1: rgba(16,22,28,0.92);
+  --text-primary: #F0F5F2;
+  --text-secondary: #A8B3BD;
+  --text-tertiary: #71808F;
+  --text-placeholder: #4A5568;
+  --accent-mint: #7CE0C3;
+  --accent-mint-glow: rgba(124,224,195,0.22);
+  --accent-cyan: #66B8C7;
+  --accent-gold: #F2B84B;
+  --error: #F06464;
+  --success: #238636;
+  --line-soft: rgba(225,238,231,0.08);
+  --line-strong: rgba(225,238,231,0.16);
+  --shadow-pop: 0 12px 28px rgba(84,212,158,0.18);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-primary: "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-secondary: "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-mono: "Cascadia Code", "Fira Code", "Consolas", monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Page Layout ─── */
+.page-header {
+  padding: 48px 40px 32px;
+  border-bottom: 1px solid var(--line-soft);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  font-size: 12px;
+  font-family: var(--font-secondary);
+  color: var(--text-tertiary);
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+/* ─── Feature Section ─── */
+.feature {
+  padding-top: 48px;
+}
+.feature-num {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  color: var(--accent-mint);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.feature h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.feature .desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  max-width: 560px;
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+.feature .desc code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent-cyan);
+}
+
+/* ─── Mockup Frame ─── */
+.mockup-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.mockup-frame {
+  background: var(--bg-secondary);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: relative;
+  overflow: visible;
+}
+.mockup-frame.wide { flex: 1 1 100%; min-width: 380px; }
+.mockup-frame.medium { flex: 1 1 340px; min-width: 300px; }
+.mockup-frame.narrow { flex: 0 0 auto; min-width: 240px; }
+
+.frame-label {
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  font-size: 9px;
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 0 6px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.frame-label.accent { color: var(--accent-mint); }
+
+/* ─── State Tags ─── */
+.state-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.state-tag {
+  font-size: 9px;
+  font-family: var(--font-secondary);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.state-tag.active { color: var(--accent-mint); background: rgba(124,224,195,0.1); }
+
+/* ─── Responsive Note ─── */
+.responsive-note {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(102,184,199,0.06);
+  border-left: 2px solid rgba(102,184,199,0.3);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 11px;
+  font-family: var(--font-secondary);
+  color: var(--text-tertiary);
+  line-height: 1.6;
+}
+
+/* ─── Separator between features ─── */
+.feature + .feature {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ═══════════════════════════════════════════════
+   FEATURE 1: Context Menu
+   ═══════════════════════════════════════════════ */
+.ctx-menu {
+  width: 260px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 5px;
+  box-shadow: 0 18px 54px rgba(0,0,0,0.38), 0 0 0 1px rgba(255,255,255,0.03);
+}
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+  position: relative;
+}
+.ctx-item:hover {
+  background: rgba(124,224,195,0.1);
+}
+.ctx-item:hover .ctx-label { color: var(--accent-mint); }
+.ctx-item:hover .ctx-icon { color: var(--accent-mint); }
+.ctx-item.danger:hover { background: rgba(240,100,100,0.1); }
+.ctx-item.danger:hover .ctx-label { color: var(--error); }
+.ctx-item.danger:hover .ctx-icon { color: var(--error); }
+.ctx-item.active {
+  background: rgba(124,224,195,0.15);
+}
+.ctx-item.active .ctx-label { color: var(--accent-mint); }
+.ctx-item.active .ctx-icon { color: var(--accent-mint); }
+
+.ctx-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+.ctx-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  transition: color 120ms;
+}
+.ctx-item:hover .ctx-label { color: var(--text-primary); }
+.ctx-shortcut {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+}
+.ctx-arrow {
+  font-size: 9px;
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.ctx-separator {
+  height: 1px;
+  background: var(--line-soft);
+  margin: 4px 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   FEATURE 2: Empty State + Monitoring Toggle
+   ═══════════════════════════════════════════════ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(124,224,195,0.12), rgba(124,224,195,0.03) 70%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+.empty-icon::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(124,224,195,0.1);
+}
+.empty-icon svg {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-mint);
+  opacity: 0.6;
+}
+.empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.empty-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 28px;
+  max-width: 240px;
+  line-height: 1.7;
+}
+
+/* Toggle Button */
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 28px;
+  background: linear-gradient(135deg, var(--accent-mint), #54D49E);
+  color: var(--text-inverse, #06100D);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  transition: transform 160ms, box-shadow 240ms;
+}
+.toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px rgba(124,224,195,0.35), 0 8px 20px rgba(124,224,195,0.18);
+}
+.toggle-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 0 12px rgba(124,224,195,0.2);
+}
+.toggle-btn .btn-icon {
+  font-size: 16px;
+  display: flex;
+}
+
+/* Glow ring animation on toggle */
+.toggle-btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--radius-md) + 3px);
+  background: linear-gradient(135deg, rgba(124,224,195,0.25), rgba(84,212,158,0.12));
+  z-index: -1;
+  animation: toggle-glow 3s ease-in-out infinite;
+}
+@keyframes toggle-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.shortcut-hint {
+  margin-top: 20px;
+  font-size: 11px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shortcut-hint kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  font-family: var(--font-secondary);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   FEATURE 3: Trash / Recycle Bin
+   ═══════════════════════════════════════════════ */
+.trash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.trash-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trash-title h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.trash-title .count {
+  font-size: 11px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  background: var(--bg-tertiary);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.trash-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid rgba(240,100,100,0.25);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.trash-clear-btn:hover {
+  background: rgba(240,100,100,0.1);
+  border-color: rgba(240,100,100,0.4);
+}
+
+.trash-list {
+  list-style: none;
+}
+.trash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  transition: background 120ms;
+}
+.trash-item:hover {
+  background: var(--bg-hover);
+}
+.trash-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(113,128,143,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.trash-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.trash-item-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trash-item-meta {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  margin-top: 1px;
+}
+.trash-item-meta .auto-clean {
+  color: var(--accent-gold);
+}
+.trash-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.trash-item:hover .trash-actions { opacity: 1; }
+.trash-action-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-primary);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.trash-action-btn.restore {
+  background: rgba(124,224,195,0.1);
+  color: var(--accent-mint);
+}
+.trash-action-btn.restore:hover { background: rgba(124,224,195,0.2); }
+.trash-action-btn.delete {
+  background: rgba(240,100,100,0.08);
+  color: var(--error);
+}
+.trash-action-btn.delete:hover { background: rgba(240,100,100,0.18); }
+
+/* Trash Empty State */
+.trash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+.trash-empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+.trash-empty-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+.trash-empty-sub {
+  font-size: 11px;
+  color: var(--text-placeholder);
+}
+
+/* ═══════════════════════════════════════════════
+   FEATURE 4: Smart Content Recognition
+   ═══════════════════════════════════════════════ */
+.smart-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: background 120ms, border-color 120ms;
+  margin-bottom: 2px;
+}
+.smart-item:hover {
+  background: rgba(124,224,195,0.05);
+  border-color: var(--line-soft);
+}
+.smart-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+  position: relative;
+}
+.smart-badge.url {
+  background: rgba(102,184,199,0.12);
+  border: 1px solid rgba(102,184,199,0.2);
+}
+.smart-badge.email {
+  background: rgba(159,203,255,0.1);
+  border: 1px solid rgba(159,203,255,0.2);
+}
+.smart-badge.color {
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.smart-badge.json {
+  background: rgba(242,184,75,0.08);
+  border: 1px solid rgba(242,184,75,0.15);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+.smart-badge.code {
+  background: rgba(124,224,195,0.08);
+  border: 1px solid rgba(124,224,195,0.15);
+}
+.smart-badge.phone {
+  background: rgba(242,184,75,0.1);
+  border: 1px solid rgba(242,184,75,0.18);
+}
+.smart-badge .lang-tag {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 7px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-mint);
+  background: var(--bg-secondary);
+  padding: 0 3px;
+  border-radius: 2px;
+  letter-spacing: 0.3px;
+}
+.smart-info {
+  flex: 1;
+  min-width: 0;
+}
+.smart-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.smart-preview {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.smart-preview.mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-placeholder);
+}
+.smart-time {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+}
+
+/* Color swatch mini */
+.color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+}
+
+/* JSON snippet */
+.json-snippet {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 36px;
+}
+.json-key { color: var(--accent-cyan); }
+.json-str { color: var(--accent-mint); }
+.json-num { color: var(--accent-gold); }
+.json-punct { color: var(--text-placeholder); }
+
+/* Code snippet */
+.code-snippet {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.code-kw { color: var(--accent-cyan); }
+.code-fn { color: var(--accent-gold); }
+.code-str { color: var(--accent-mint); }
+.code-cmt { color: var(--text-placeholder); }
+.code-op { color: var(--text-tertiary); }
+
+/* ═══════════════════════════════════════════════
+   FEATURE 5: Sort / Filter Bar
+   ═══════════════════════════════════════════════ */
+.filter-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+.filter-pill {
+  padding: 5px 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 120ms;
+  white-space: nowrap;
+  font-family: var(--font-primary);
+}
+.filter-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+.filter-pill.active {
+  background: rgba(124,224,195,0.1);
+  color: var(--accent-mint);
+  border-color: rgba(124,224,195,0.2);
+}
+
+.sort-control {
+  position: relative;
+  margin-left: auto;
+}
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 120ms;
+}
+.sort-btn:hover {
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+}
+.sort-btn .sort-arrow {
+  font-size: 8px;
+  color: var(--accent-mint);
+  transition: transform 160ms;
+}
+.sort-btn.open .sort-arrow {
+  transform: rotate(180deg);
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 170px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+.sort-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms;
+}
+.sort-option:hover {
+  background: rgba(124,224,195,0.08);
+  color: var(--text-primary);
+}
+.sort-option.active {
+  color: var(--accent-mint);
+  background: rgba(124,224,195,0.1);
+}
+.sort-option .check {
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.sort-option.active .check { opacity: 1; }
+
+/* ═══════════════════════════════════════════════
+   FEATURE 6: Quick Phrases Panel
+   ═══════════════════════════════════════════════ */
+.phrases-panel {
+  width: 100%;
+}
+.phrases-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.phrases-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phrases-title h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.phrases-title .count {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+}
+.phrases-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(124,224,195,0.1);
+  border: 1px solid rgba(124,224,195,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--accent-mint);
+  font-size: 11px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 120ms;
+}
+.phrases-add-btn:hover {
+  background: rgba(124,224,195,0.18);
+  border-color: rgba(124,224,195,0.35);
+}
+
+.phrases-list {
+  list-style: none;
+}
+.phrase-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  transition: background 120ms;
+  position: relative;
+}
+.phrase-item:hover {
+  background: var(--bg-hover);
+}
+.phrase-item:hover .phrase-actions { opacity: 1; }
+.phrase-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-mint);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.phrase-info {
+  flex: 1;
+  min-width: 0;
+}
+.phrase-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.phrase-preview {
+  font-size: 10px;
+  font-family: var(--font-secondary);
+  color: var(--text-placeholder);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.phrase-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.phrase-action {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 120ms;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+}
+.phrase-action:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+}
+.phrase-action.delete:hover {
+  background: rgba(240,100,100,0.1);
+  color: var(--error);
+}
+/* Copy flash animation */
+.phrase-item.copied::after {
+  content: '已复制';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--accent-mint);
+  animation: copy-flash 1s ease forwards;
+}
+@keyframes copy-flash {
+  0% { opacity: 1; transform: translateY(-50%) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-50%) scale(0.95); }
+}
+
+/* Phrases empty state */
+.phrases-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 20px;
+  text-align: center;
+}
+.phrases-empty-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  opacity: 0.25;
+}
+.phrases-empty-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+.phrases-empty-sub {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  line-height: 1.6;
+  max-width: 220px;
+}
+.phrases-empty .phrases-add-btn {
+  margin-top: 16px;
+}
+
+/* ═══════════════════════════════════════════════
+   Panel Frame (simulates 430x620 window)
+   ═══════════════════════════════════════════════ */
+.panel-frame {
+  width: 430px;
+  max-width: 100%;
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 18px 54px rgba(0,0,0,0.38);
+}
+.panel-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  gap: 8px;
+}
+.panel-titlebar-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.panel-titlebar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-mint);
+  opacity: 0.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- PAGE HEADER -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<header class="page-header">
+  <h1>拾遗 — UI Mockup</h1>
+  <div class="subtitle">6 Feature Designs / 水墨风 Dark Theme / Design Tokens from theme_singleton.py</div>
+</header>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 1: Enhanced Context Menu -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f1">
+  <div class="feature-num">Feature 01</div>
+  <h2>右键菜单增强</h2>
+  <p class="desc">
+    Enhanced right-click context menu with grouped sections, icons, keyboard shortcuts, and new actions:
+    <code>编辑</code>, <code>复制为纯文本</code>, <code>添加标签</code> submenu, <code>导出此条</code>.
+  </p>
+
+  <div class="mockup-row">
+    <!-- Default State -->
+    <div class="mockup-frame narrow" style="position:relative;">
+      <span class="frame-label accent">Default State</span>
+      <div class="ctx-menu">
+        <!-- Section: Quick Actions -->
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </span>
+          <span class="ctx-label">复制</span>
+          <span class="ctx-shortcut">Ctrl+C</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+          </span>
+          <span class="ctx-label">复制为纯文本</span>
+          <span class="ctx-shortcut">Ctrl+Shift+C</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </span>
+          <span class="ctx-label">编辑</span>
+          <span class="ctx-shortcut">Ctrl+E</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <!-- Section: Organize -->
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </span>
+          <span class="ctx-label">添加标签</span>
+          <span class="ctx-arrow">▸</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <span class="ctx-label">导出此条</span>
+          <span class="ctx-shortcut">Ctrl+S</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <!-- Section: Send -->
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </span>
+          <span class="ctx-label">发送到预览栏</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          </span>
+          <span class="ctx-label">发送到暂存架</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <!-- Section: Marks -->
+        <div class="ctx-item">
+          <span class="ctx-icon" style="color:var(--accent-gold);">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="ctx-label">收藏</span>
+          <span class="ctx-shortcut">Ctrl+D</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="color:var(--accent-gold);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="ctx-label">星标</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 17v5M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24z"/></svg>
+          </span>
+          <span class="ctx-label">置顶</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <!-- Section: Destructive -->
+        <div class="ctx-item danger">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </span>
+          <span class="ctx-label">删除</span>
+          <span class="ctx-shortcut">Del</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          <span class="ctx-label">多选模式</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hover State -->
+    <div class="mockup-frame narrow" style="position:relative;">
+      <span class="frame-label">Hover State</span>
+      <div class="ctx-menu">
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </span>
+          <span class="ctx-label">复制</span>
+          <span class="ctx-shortcut">Ctrl+C</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+          </span>
+          <span class="ctx-label">复制为纯文本</span>
+          <span class="ctx-shortcut">Ctrl+Shift+C</span>
+        </div>
+        <!-- HOVER STATE: Edit item -->
+        <div class="ctx-item active">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </span>
+          <span class="ctx-label">编辑</span>
+          <span class="ctx-shortcut">Ctrl+E</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </span>
+          <span class="ctx-label">添加标签</span>
+          <span class="ctx-arrow">▸</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <span class="ctx-label">导出此条</span>
+          <span class="ctx-shortcut">Ctrl+S</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </span>
+          <span class="ctx-label">发送到预览栏</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          </span>
+          <span class="ctx-label">发送到暂存架</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="color:var(--accent-gold);">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="ctx-label">收藏</span>
+          <span class="ctx-shortcut">Ctrl+D</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="color:var(--accent-gold);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="ctx-label">星标</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 17v5M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24z"/></svg>
+          </span>
+          <span class="ctx-label">置顶</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item danger">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </span>
+          <span class="ctx-label">删除</span>
+          <span class="ctx-shortcut">Del</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          <span class="ctx-label">多选模式</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submenu (Add Tag) -->
+    <div class="mockup-frame narrow" style="position:relative;">
+      <span class="frame-label">Tag Submenu</span>
+      <div class="ctx-menu" style="width:200px;">
+        <div class="ctx-item">
+          <span class="ctx-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="ctx-label">新建标签...</span>
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="width:8px;height:8px;border-radius:50%;background:#7CE0C3;flex-shrink:0;"></span>
+          <span class="ctx-label">工作</span>
+          <span class="ctx-arrow" style="color:var(--accent-mint);">✓</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="width:8px;height:8px;border-radius:50%;background:#F2B84B;flex-shrink:0;"></span>
+          <span class="ctx-label">重要</span>
+          <span class="ctx-arrow" style="color:var(--accent-mint);">✓</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="width:8px;height:8px;border-radius:50%;background:#66B8C7;flex-shrink:0;"></span>
+          <span class="ctx-label">代码</span>
+          <span class="ctx-arrow" style="opacity:0;">-</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="width:8px;height:8px;border-radius:50%;background:#FF9A9A;flex-shrink:0;"></span>
+          <span class="ctx-label">临时</span>
+          <span class="ctx-arrow" style="opacity:0;">-</span>
+        </div>
+        <div class="ctx-item">
+          <span class="ctx-icon" style="width:8px;height:8px;border-radius:50%;background:#A8B3BD;flex-shrink:0;"></span>
+          <span class="ctx-label">归档</span>
+          <span class="ctx-arrow" style="opacity:0;">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="state-row">
+    <span class="state-tag">Icons: 14px inline SVG</span>
+    <span class="state-tag">Sections: Quick / Organize / Send / Marks / Destructive</span>
+    <span class="state-tag">Separators: 1px line-soft with 4px margin</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 2: Empty State with Monitoring Toggle -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f2">
+  <div class="feature-num">Feature 02</div>
+  <h2>监听关闭状态 — 空状态</h2>
+  <p class="desc">
+    When clipboard monitoring is OFF (default on fresh install), the empty state replaces the clipboard list.
+    Prominent "开启监听" toggle with breathing glow effect and keyboard shortcut hint.
+  </p>
+
+  <div class="mockup-row">
+    <div class="mockup-frame wide" style="position:relative;">
+      <span class="frame-label accent">Panel View — Monitoring OFF</span>
+      <div class="panel-frame" style="height:460px; display:flex; flex-direction:column;">
+        <!-- Title bar -->
+        <div class="panel-titlebar">
+          <div class="panel-titlebar-dot"></div>
+          <span class="panel-titlebar-text">拾遗</span>
+          <div style="flex:1"></div>
+          <span style="font-size:10px;font-family:var(--font-secondary);color:var(--text-placeholder);">监听已关闭</span>
+        </div>
+
+        <!-- Filter bar (faded) -->
+        <div style="display:flex;gap:6px;padding:8px 14px;opacity:0.3;">
+          <span class="filter-pill" style="opacity:0.5;">全部</span>
+          <span class="filter-pill">文本</span>
+          <span class="filter-pill">图片</span>
+        </div>
+
+        <!-- Empty state content -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;">
+          <div class="empty-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <line x1="9" y1="12" x2="15" y2="12"/>
+              <line x1="9" y1="16" x2="13" y2="16"/>
+            </svg>
+          </div>
+          <div class="empty-title">剪贴板监听已关闭</div>
+          <div class="empty-subtitle">开启后将自动记录复制内容，支持文本、图片、文件等多种格式</div>
+
+          <button class="toggle-btn">
+            <span class="btn-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </span>
+            开启监听
+          </button>
+
+          <div class="shortcut-hint">
+            <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> 唤出面板
+          </div>
+        </div>
+
+        <!-- Status bar hint -->
+        <div style="padding:8px 14px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:6px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--text-placeholder);"></div>
+          <span style="font-size:10px;font-family:var(--font-secondary);color:var(--text-placeholder);">监听状态: 已暂停</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Button States -->
+    <div class="mockup-frame narrow" style="position:relative; display:flex; flex-direction:column; gap:20px; align-items:center;">
+      <span class="frame-label">Button States</span>
+
+      <div style="text-align:center;">
+        <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:6px;font-family:var(--font-secondary);">DEFAULT</div>
+        <button class="toggle-btn" style="animation:none;">
+          <span class="btn-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+          开启监听
+        </button>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:6px;font-family:var(--font-secondary);">HOVER</div>
+        <button class="toggle-btn" style="animation:none;transform:translateY(-1px);box-shadow:0 0 24px rgba(124,224,195,0.35),0 8px 20px rgba(124,224,195,0.18);">
+          <span class="btn-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+          开启监听
+        </button>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:6px;font-family:var(--font-secondary);">ACTIVE (PRESSED)</div>
+        <button class="toggle-btn" style="animation:none;box-shadow:0 0 12px rgba(124,224,195,0.2);background:linear-gradient(135deg,#54D49E,#7CE0C3);">
+          <span class="btn-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+          开启监听
+        </button>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:6px;font-family:var(--font-secondary);">ACTIVE STATE (TOGGLED ON)</div>
+        <button class="toggle-btn" style="animation:none;background:var(--bg-tertiary);color:var(--accent-mint);border:1px solid rgba(124,224,195,0.2);">
+          <span class="btn-icon" style="font-size:11px;">⏸</span>
+          监听中
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="responsive-note">
+    Responsive: On narrower panels (&lt;380px), the button stacks vertically with the shortcut hint below.
+    The glow animation uses a 3s ease-in-out cycle for a subtle breathing effect, matching the existing ball status-dot breathing pattern.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 3: Trash / Recycle Bin -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f3">
+  <div class="feature-num">Feature 03</div>
+  <h2>回收站</h2>
+  <p class="desc">
+    Trash view accessible from the title bar or action bar. Shows deleted items with restore/permanent-delete actions.
+    Items auto-purge after 30 days. Empty trash state included.
+  </p>
+
+  <div class="mockup-row">
+    <!-- With items -->
+    <div class="mockup-frame wide" style="position:relative;">
+      <span class="frame-label accent">With Items (12 items)</span>
+      <div style="background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--line-soft);overflow:hidden;">
+        <div class="trash-header">
+          <div class="trash-title">
+            <svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            <h3>回收站</h3>
+            <span class="count">12 项</span>
+          </div>
+          <button class="trash-clear-btn">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            清空回收站
+          </button>
+        </div>
+
+        <ul class="trash-list">
+          <li class="trash-item">
+            <div class="trash-item-icon">📝</div>
+            <div class="trash-item-info">
+              <div class="trash-item-name">项目进度汇报 - Q2 季度总结</div>
+              <div class="trash-item-meta">文本 · 1,240 字符 · 2天前删除 · <span class="auto-clean">28天后自动清理</span></div>
+            </div>
+            <div class="trash-actions">
+              <button class="trash-action-btn restore">恢复</button>
+              <button class="trash-action-btn delete">永久删除</button>
+            </div>
+          </li>
+          <li class="trash-item">
+            <div class="trash-item-icon" style="background:rgba(124,224,195,0.1);">🖼</div>
+            <div class="trash-item-info">
+              <div class="trash-item-name">screenshot_20260528.png</div>
+              <div class="trash-item-meta">图片 · 2.4 MB · 3天前删除 · <span class="auto-clean">27天后自动清理</span></div>
+            </div>
+            <div class="trash-actions">
+              <button class="trash-action-btn restore">恢复</button>
+              <button class="trash-action-btn delete">永久删除</button>
+            </div>
+          </li>
+          <li class="trash-item">
+            <div class="trash-item-icon" style="background:rgba(159,203,255,0.1);">📄</div>
+            <div class="trash-item-info">
+              <div class="trash-item-name">api_response_config.json</div>
+              <div class="trash-item-meta">文件 · 12 KB · 5天前删除 · <span class="auto-clean">25天后自动清理</span></div>
+            </div>
+            <div class="trash-actions">
+              <button class="trash-action-btn restore">恢复</button>
+              <button class="trash-action-btn delete">永久删除</button>
+            </div>
+          </li>
+          <li class="trash-item">
+            <div class="trash-item-icon">🌐</div>
+            <div class="trash-item-info">
+              <div class="trash-item-name">https://github.com/nicehash/rest-clients-demo</div>
+              <div class="trash-item-meta">URL · 1周前删除 · <span class="auto-clean">23天后自动清理</span></div>
+            </div>
+            <div class="trash-actions">
+              <button class="trash-action-btn restore">恢复</button>
+              <button class="trash-action-btn delete">永久删除</button>
+            </div>
+          </li>
+          <li class="trash-item">
+            <div class="trash-item-icon" style="background:rgba(240,100,100,0.08);">📋</div>
+            <div class="trash-item-info">
+              <div class="trash-item-name">会议纪要 - 产品评审会</div>
+              <div class="trash-item-meta">文本 · 3,800 字符 · 10天前删除 · <span class="auto-clean">20天后自动清理</span></div>
+            </div>
+            <div class="trash-actions">
+              <button class="trash-action-btn restore">恢复</button>
+              <button class="trash-action-btn delete">永久删除</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Empty Trash -->
+    <div class="mockup-frame medium" style="position:relative;">
+      <span class="frame-label">Empty State</span>
+      <div style="background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--line-soft);overflow:hidden;">
+        <div class="trash-header">
+          <div class="trash-title">
+            <svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            <h3>回收站</h3>
+            <span class="count">0 项</span>
+          </div>
+          <button class="trash-clear-btn" style="opacity:0.3;pointer-events:none;">
+            清空回收站
+          </button>
+        </div>
+        <div class="trash-empty">
+          <div class="trash-empty-icon">🗑</div>
+          <div class="trash-empty-title">回收站为空</div>
+          <div class="trash-empty-sub">删除的内容将在这里保留 30 天</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="state-row">
+    <span class="state-tag active">Hover: Shows restore/delete actions per item</span>
+    <span class="state-tag">Auto-clean countdown uses gold accent</span>
+    <span class="state-tag">Clear all button: border-only danger style</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 4: Smart Content Recognition -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f4">
+  <div class="feature-num">Feature 04</div>
+  <h2>智能内容识别</h2>
+  <p class="desc">
+    Different content types are visually distinguished in the list. Each type gets a unique badge,
+    color accent, and content-specific preview rendering.
+  </p>
+
+  <div class="mockup-row">
+    <div class="mockup-frame wide" style="position:relative;">
+      <span class="frame-label accent">All Content Types</span>
+      <div style="background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--line-soft);padding:8px 12px;">
+
+        <!-- URL -->
+        <div class="smart-item">
+          <div class="smart-badge url">
+            <svg width="16" height="16" fill="none" stroke="var(--accent-cyan)" stroke-width="1.6" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div class="smart-info">
+            <div class="smart-title" style="color:var(--accent-cyan);">github.com/nicehash/rest-clients-demo</div>
+            <div class="smart-preview">
+              <svg width="10" height="10" fill="none" stroke="var(--text-placeholder)" stroke-width="1.5" viewBox="0 0 24 24" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              GitHub REST API demos and examples for Python, Node.js, and C#
+            </div>
+          </div>
+          <div class="smart-time">2分钟前</div>
+        </div>
+
+        <!-- Email -->
+        <div class="smart-item">
+          <div class="smart-badge email">
+            <svg width="16" height="16" fill="none" stroke="var(--typeText, #9FCBFF)" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>
+          </div>
+          <div class="smart-info">
+            <div class="smart-title" style="color:#9FCBFF;">zhang.wei@company.com</div>
+            <div class="smart-preview">邮箱地址 — 点击可直接发送邮件</div>
+          </div>
+          <div class="smart-time">5分钟前</div>
+        </div>
+
+        <!-- Color Code -->
+        <div class="smart-item">
+          <div class="smart-badge color">
+            <div class="color-swatch" style="background:#FF5733;"></div>
+          </div>
+          <div class="smart-info">
+            <div class="smart-title" style="display:flex;align-items:center;gap:6px;">
+              #FF5733
+              <span style="width:12px;height:12px;border-radius:3px;background:#FF5733;display:inline-block;vertical-align:middle;border:1px solid rgba(255,255,255,0.1);"></span>
+              <span style="font-size:10px;color:var(--text-placeholder);font-family:var(--font-secondary);">RGB(255, 87, 51)</span>
+            </div>
+            <div class="smart-preview">颜色值 — 点击复制 HEX / RGB / HSL</div>
+          </div>
+          <div class="smart-time">8分钟前</div>
+        </div>
+
+        <!-- JSON -->
+        <div class="smart-item">
+          <div class="smart-badge json">{ }</div>
+          <div class="smart-info">
+            <div class="smart-title">api_response.json</div>
+            <div class="json-snippet"><span class="json-punct">{</span>  <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"ok"</span><span class="json-punct">,</span>  <span class="json-key">"data"</span><span class="json-punct">:</span> <span class="json-punct">{</span>  <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">42</span>  <span class="json-punct">}</span> <span class="json-punct">}</span></div>
+          </div>
+          <div class="smart-time">12分钟前</div>
+        </div>
+
+        <!-- Code (Python) -->
+        <div class="smart-item">
+          <div class="smart-badge code" style="position:relative;">
+            <span class="lang-tag">PY</span>
+            <svg width="16" height="16" fill="none" stroke="var(--accent-mint)" stroke-width="1.6" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="smart-info">
+            <div class="smart-title">clipboard_monitor.py</div>
+            <div class="code-snippet"><span class="code-kw">def</span> <span class="code-fn">on_clipboard_change</span><span class="code-op">(</span><span class="code-op">self</span><span class="code-op">):</span>  <span class="code-cmt"># 监听剪贴板变化回调</span>  <span class="code-fn">self</span><span class="code-op">.manager.</span><span class="code-fn">add_item</span><span class="code-op">(</span><span class="code-fn">self</span><span class="code-op">._capture())</span></div>
+          </div>
+          <div class="smart-time">18分钟前</div>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="smart-item">
+          <div class="smart-badge phone">
+            <svg width="16" height="16" fill="none" stroke="var(--accent-gold)" stroke-width="1.6" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <div class="smart-info">
+            <div class="smart-title" style="color:var(--accent-gold);">138-0013-8000</div>
+            <div class="smart-preview">电话号码 — 点击可拨号或复制</div>
+          </div>
+          <div class="smart-time">25分钟前</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Badge Detail -->
+    <div class="mockup-frame narrow" style="position:relative;">
+      <span class="frame-label">Badge Palette</span>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:8px 0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge url" style="width:28px;height:28px;"><svg width="12" height="12" fill="none" stroke="var(--accent-cyan)" stroke-width="1.6" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">URL</div><div style="font-size:9px;color:var(--accent-cyan);">#66B8C7</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge email" style="width:28px;height:28px;"><svg width="12" height="12" fill="none" stroke="#9FCBFF" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">Email</div><div style="font-size:9px;color:#9FCBFF;">#9FCBFF</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge color" style="width:28px;height:28px;"><div style="width:100%;height:100%;border-radius:5px;background:var(--accent-mint);"></div></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">Color</div><div style="font-size:9px;color:var(--accent-mint);">#7CE0C3</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge json" style="width:28px;height:28px;font-size:9px;">{ }</div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">JSON</div><div style="font-size:9px;color:var(--accent-gold);">#F2B84B</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge code" style="width:28px;height:28px;"><svg width="12" height="12" fill="none" stroke="var(--accent-mint)" stroke-width="1.6" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">Code</div><div style="font-size:9px;color:var(--accent-mint);">#7CE0C3</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="smart-badge phone" style="width:28px;height:28px;"><svg width="12" height="12" fill="none" stroke="var(--accent-gold)" stroke-width="1.6" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72"/></svg></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);">Phone</div><div style="font-size:9px;color:var(--accent-gold);">#F2B84B</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="state-row">
+    <span class="state-tag active">Hover: row highlights with 5% mint overlay</span>
+    <span class="state-tag">Code snippets: syntax-colored with mono font</span>
+    <span class="state-tag">JSON: auto-formatted with key/string/number colors</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 5: Sort / Filter Bar -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f5">
+  <div class="feature-num">Feature 05</div>
+  <h2>排序 / 筛选栏</h2>
+  <p class="desc">
+    Sort control integrated into the existing FilterBar area. Collapsible dropdown with 4 sort modes.
+    Active sort indicator persists. Fits the existing pill-style filter buttons.
+  </p>
+
+  <div class="mockup-row">
+    <!-- Full bar with sort -->
+    <div class="mockup-frame wide" style="position:relative;">
+      <span class="frame-label accent">Integrated into FilterBar</span>
+      <div style="background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--line-soft);padding:8px 12px;">
+        <div class="filter-bar-row">
+          <span class="filter-pill active">全部</span>
+          <span class="filter-pill">文本</span>
+          <span class="filter-pill">图片</span>
+          <span class="filter-pill">Word</span>
+          <span class="filter-pill">Excel</span>
+          <span class="filter-pill">PDF</span>
+          <span class="filter-pill">PPT</span>
+          <span class="filter-pill">压缩</span>
+
+          <div class="sort-control">
+            <button class="sort-btn">
+              <svg width="10" height="10" fill="none" stroke="var(--accent-mint)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+              最新优先
+              <span class="sort-arrow">▾</span>
+            </button>
+            <!-- Dropdown (shown open for mockup) -->
+            <div class="sort-dropdown">
+              <div class="sort-option active">
+                <span>最新优先</span>
+                <span class="check" style="color:var(--accent-mint);">✓</span>
+              </div>
+              <div class="sort-option">
+                <span>最早优先</span>
+                <span class="check">✓</span>
+              </div>
+              <div class="sort-option">
+                <span>按类型</span>
+                <span class="check">✓</span>
+              </div>
+              <div class="sort-option">
+                <span>按来源</span>
+                <span class="check">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sort button states -->
+    <div class="mockup-frame medium" style="position:relative;">
+      <span class="frame-label">Button States</span>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;padding:8px 0;">
+        <div>
+          <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:5px;font-family:var(--font-secondary);">DEFAULT</div>
+          <button class="sort-btn">
+            <svg width="10" height="10" fill="none" stroke="var(--accent-mint)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+            最新优先
+            <span class="sort-arrow">▾</span>
+          </button>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:5px;font-family:var(--font-secondary);">HOVER</div>
+          <button class="sort-btn" style="border-color:var(--line-strong);color:var(--text-primary);">
+            <svg width="10" height="10" fill="none" stroke="var(--accent-mint)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+            最新优先
+            <span class="sort-arrow">▾</span>
+          </button>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:5px;font-family:var(--font-secondary);">DROPDOWN OPEN</div>
+          <div style="position:relative;">
+            <button class="sort-btn open">
+              <svg width="10" height="10" fill="none" stroke="var(--accent-mint)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+              按类型
+              <span class="sort-arrow" style="transform:rotate(180deg);">▾</span>
+            </button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--text-placeholder);margin-bottom:5px;font-family:var(--font-secondary);">FILTER PILL ACTIVE</div>
+          <span class="filter-pill active" style="margin:0;">文本</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="responsive-note">
+    Responsive: On narrow panels, filter pills truncate with horizontal scroll. Sort control remains
+    right-aligned. Dropdown pins to the right edge of the panel. Max 8 visible pills before scroll.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- FEATURE 6: Quick Phrases Panel -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="feature" id="f6">
+  <div class="feature-num">Feature 06</div>
+  <h2>常用短语</h2>
+  <p class="desc">
+    Quick phrases feature accessible from a new tab/button in the title bar or action bar.
+    Click to copy, right-click to edit/delete. Persistent across sessions.
+  </p>
+
+  <div class="mockup-row">
+    <!-- Panel view with phrases -->
+    <div class="mockup-frame wide" style="position:relative;">
+      <span class="frame-label accent">Panel View — Phrases Tab</span>
+      <div class="panel-frame" style="height:420px;display:flex;flex-direction:column;">
+        <!-- Title bar with tab indicator -->
+        <div class="panel-titlebar" style="gap:16px;">
+          <div class="panel-titlebar-dot" style="opacity:0.3;"></div>
+          <span class="panel-titlebar-text" style="opacity:0.5;">拾遗</span>
+          <div style="width:1px;height:16px;background:var(--line-soft);"></div>
+          <span class="panel-titlebar-text" style="color:var(--accent-mint);">常用短语</span>
+          <div style="flex:1"></div>
+        </div>
+
+        <!-- Phrases panel -->
+        <div style="flex:1;overflow:hidden;">
+          <div class="phrases-header">
+            <div class="phrases-title">
+              <h3>常用短语</h3>
+              <span class="count">6 条</span>
+            </div>
+            <button class="phrases-add-btn">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              添加短语
+            </button>
+          </div>
+
+          <ul class="phrases-list">
+            <li class="phrase-item">
+              <div class="phrase-dot"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">收件地址</div>
+                <div class="phrase-preview">北京市朝阳区建国路88号SOHO现代城A座1205</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+
+            <li class="phrase-item">
+              <div class="phrase-dot" style="background:var(--accent-cyan);"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">邮箱签名</div>
+                <div class="phrase-preview">Best regards,\n张伟 / Software Engineer\nzhang.wei@company.com</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+
+            <li class="phrase-item">
+              <div class="phrase-dot" style="background:var(--accent-gold);"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">SSH 公钥</div>
+                <div class="phrase-preview">ssh-rsa AAAAB3NzaC1yc2EAAAA...truncated...== user@machine</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+
+            <li class="phrase-item">
+              <div class="phrase-dot" style="background:#FF9A9A;"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">会议邀请模板</div>
+                <div class="phrase-preview">Hi team, 请参加周X XX:00 的产品评审会，会议室 A302</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+
+            <li class="phrase-item">
+              <div class="phrase-dot" style="background:var(--accent-mint);"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">常用命令</div>
+                <div class="phrase-preview">git pull origin main && git push origin HEAD</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+
+            <li class="phrase-item">
+              <div class="phrase-dot" style="background:var(--accent-cyan);"></div>
+              <div class="phrase-info">
+                <div class="phrase-name">API Base URL</div>
+                <div class="phrase-preview">https://api.internal.company.com/v2</div>
+              </div>
+              <div class="phrase-actions">
+                <button class="phrase-action" title="编辑">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="phrase-action delete" title="删除">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State + States -->
+    <div class="mockup-frame medium" style="position:relative;display:flex;flex-direction:column;gap:20px;">
+      <span class="frame-label">Empty State</span>
+      <div style="background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--line-soft);overflow:hidden;">
+        <div class="phrases-header">
+          <div class="phrases-title">
+            <h3>常用短语</h3>
+            <span class="count">0 条</span>
+          </div>
+          <button class="phrases-add-btn">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            添加短语
+          </button>
+        </div>
+        <div class="phrases-empty">
+          <div class="phrases-empty-icon">💬</div>
+          <div class="phrases-empty-title">还没有常用短语</div>
+          <div class="phrases-empty-sub">保存地址、签名、快捷命令等常用文本，点击即可复制</div>
+          <button class="phrases-add-btn" style="margin-top:14px;">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            创建第一条短语
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="state-row">
+    <span class="state-tag active">Hover: shows edit/delete action buttons</span>
+    <span class="state-tag">Click: copies phrase + shows "已复制" flash</span>
+    <span class="state-tag">Dot colors: match tag color system</span>
+  </div>
+
+  <div class="responsive-note">
+    Responsive: Phrases list scrolls vertically. On narrower panels, preview text truncates earlier.
+    The title bar shows a tab separator between "拾遗" and "常用短语" to indicate the active tab.
+    Keyboard: Arrow Up/Down to navigate, Enter to copy, F2 to edit, Delete to remove.
+  </div>
+</section>
+
+</div><!-- /container -->
+</body>
+</html>

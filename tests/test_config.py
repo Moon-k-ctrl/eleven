@@ -25,7 +25,7 @@ class TestConfigDefaults:
         assert tmp_config.jpeg_quality == 85
 
     def test_default_clipboard_enabled(self, tmp_config: Config):
-        assert tmp_config.clipboard_enabled is False
+        assert tmp_config.clipboard_enabled is True
 
 
 class TestConfigPersistence:

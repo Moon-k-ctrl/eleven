@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾遗 — 暂存架侧边栏方案对比</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    background: #0a0e14;
+    color: #e0e8e4;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: #7CE0C3;
+  }
+  .subtitle {
+    text-align: center;
+    color: #71808f;
+    font-size: 14px;
+    margin-bottom: 48px;
+  }
+  .options {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .option {
+    flex: 1;
+    min-width: 380px;
+    max-width: 440px;
+    background: #10161c;
+    border-radius: 14px;
+    border: 1px solid #1a2230;
+    overflow: hidden;
+  }
+  .option-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #1a2230;
+  }
+  .option-header h2 {
+    font-size: 18px;
+    color: #f0f5f2;
+    margin-bottom: 4px;
+  }
+  .option-header .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .tag.recommended { background: #1a3a2e; color: #7CE0C3; }
+  .tag.alternative { background: #1a2a3a; color: #66b8c7; }
+  .tag.simple { background: #2a2a1a; color: #f2b84b; }
+
+  .mockup-area {
+    padding: 20px;
+    position: relative;
+    height: 380px;
+    background: #0c1116;
+    overflow: hidden;
+  }
+
+  /* Desktop background */
+  .desktop-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0f1923 0%, #162029 50%, #0f1923 100%);
+  }
+  .desktop-icon {
+    position: absolute;
+    width: 48px;
+    text-align: center;
+    font-size: 10px;
+    color: #71808f;
+  }
+  .desktop-icon .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+  .desktop-icon:nth-child(2) { top: 20px; left: 20px; }
+  .desktop-icon:nth-child(3) { top: 20px; left: 80px; }
+  .desktop-icon:nth-child(4) { top: 90px; left: 20px; }
+  .desktop-icon:nth-child(5) { top: 90px; left: 80px; }
+
+  /* Taskbar */
+  .taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background: #0a0e14;
+    border-top: 1px solid #1a2230;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .taskbar-item {
+    width: 32px;
+    height: 24px;
+    border-radius: 4px;
+    background: #1a2230;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .taskbar-item.active {
+    background: #24313b;
+    border-bottom: 2px solid #7CE0C3;
+  }
+
+  /* Chat window (target app) */
+  .chat-window {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 240px;
+    height: 280px;
+    background: #181e26;
+    border-radius: 10px;
+    border: 1px solid #1a2230;
+    overflow: hidden;
+  }
+  .chat-titlebar {
+    height: 32px;
+    background: #0e1418;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 12px;
+    color: #a8b3bd;
+  }
+  .chat-messages {
+    padding: 10px;
+    height: calc(100% - 72px);
+    overflow: hidden;
+  }
+  .chat-bubble {
+    background: #1a2a3a;
+    padding: 8px 12px;
+    border-radius: 10px 10px 10px 2px;
+    font-size: 11px;
+    color: #a8b3bd;
+    margin-bottom: 8px;
+    max-width: 80%;
+  }
+  .chat-bubble.sent {
+    background: #1a3a2e;
+    margin-left: auto;
+    border-radius: 10px 10px 2px 10px;
+  }
+  .chat-input {
+    height: 40px;
+    border-top: 1px solid #1a2230;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #4a5568;
+  }
+
+  /* Sidebar - Option A */
+  .sidebar-right {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 130px;
+    height: 300px;
+    background: #0c1116;
+    border-radius: 10px;
+    border: 1px solid #1a2230;
+    overflow: hidden;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+  }
+  .sidebar-header {
+    height: 30px;
+    background: #081016;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #a8b3bd;
+    font-weight: 600;
+  }
+  .sidebar-header .count {
+    font-size: 9px;
+    color: #71808f;
+    font-weight: 400;
+  }
+  .sidebar-grid {
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+  .sidebar-card {
+    width: 54px;
+    height: 54px;
+    background: #172029;
+    border-radius: 6px;
+    border: 1px solid #1a2230;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #71808f;
+    position: relative;
+    overflow: hidden;
+  }
+  .sidebar-card .card-icon {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  .sidebar-card.image-card {
+    background: linear-gradient(135deg, #1a3a2e, #172029);
+  }
+  .sidebar-card.image-card .card-icon { font-size: 12px; }
+  .sidebar-card.dragging {
+    opacity: 0.5;
+    border-color: #7CE0C3;
+    border-style: dashed;
+  }
+
+  /* Sidebar expand handle */
+  .sidebar-handle {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    width: 6px;
+    height: 40px;
+    background: #7CE0C3;
+    border-radius: 3px 0 0 3px;
+    opacity: 0.6;
+  }
+
+  /* Main panel - Option B (embedded) */
+  .main-panel-embedded {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 200px;
+    height: 320px;
+    background: #0c1116;
+    border-radius: 10px;
+    border: 1px solid #1a2230;
+    overflow: hidden;
+  }
+  .panel-staging-area {
+    padding: 8px;
+    border-bottom: 1px solid #1a2230;
+  }
+  .panel-staging-title {
+    font-size: 10px;
+    color: #71808f;
+    margin-bottom: 6px;
+  }
+  .panel-staging-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+  }
+  .panel-staging-card {
+    aspect-ratio: 1;
+    background: #172029;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .panel-history-area {
+    padding: 6px;
+  }
+  .panel-history-item {
+    height: 36px;
+    background: #0f1923;
+    border-radius: 6px;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 9px;
+    color: #a8b3bd;
+    border: 1px solid transparent;
+  }
+  .panel-history-item .item-icon {
+    margin-right: 6px;
+    font-size: 12px;
+  }
+
+  /* Copilot style - Option C */
+  .copilot-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 140px;
+    height: 340px;
+    background: #0c1116;
+    border-left: 1px solid #1a2230;
+    box-shadow: -8px 0 30px rgba(0,0,0,0.5);
+  }
+  .copilot-header {
+    height: 32px;
+    background: #081016;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #7CE0C3;
+    font-weight: 600;
+    border-bottom: 1px solid #1a2230;
+  }
+  .copilot-grid {
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .copilot-card {
+    height: 60px;
+    background: #172029;
+    border-radius: 8px;
+    border: 1px solid #1a2230;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #71808f;
+  }
+  .copilot-card .card-icon { font-size: 18px; margin-bottom: 3px; }
+
+  /* Drag arrow indicators */
+  .drag-arrow {
+    position: absolute;
+    color: #7CE0C3;
+    font-size: 18px;
+    animation: pulse 1.5s ease-in-out infinite;
+    opacity: 0.7;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: translateX(0); }
+    50% { opacity: 0.9; transform: translateX(-3px); }
+  }
+
+  /* Floating ball */
+  .floating-ball {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #7CE0C3, #54D49E);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(124, 224, 195, 0.3);
+    z-index: 10;
+  }
+
+  /* Pros/Cons */
+  .analysis {
+    padding: 16px 20px;
+    border-top: 1px solid #1a2230;
+  }
+  .analysis h3 {
+    font-size: 13px;
+    color: #a8b3bd;
+    margin-bottom: 10px;
+  }
+  .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .pro, .con {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .pro { color: #7CE0C3; }
+  .con { color: #f06464; }
+  .pro::before { content: "✓ "; font-weight: bold; }
+  .con::before { content: "✗ "; font-weight: bold; }
+
+  /* Interaction label */
+  .interaction-label {
+    position: absolute;
+    font-size: 9px;
+    color: #7CE0C3;
+    background: rgba(124, 224, 195, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>拾遗 — 暂存架布局方案对比</h1>
+<p class="subtitle">参考 OPPO / 荣耀 / vivo 手机中转站的侧边栏设计，三种桌面端适配方案</p>
+
+<div class="options">
+
+  <!-- Option A: Right sidebar -->
+  <div class="option">
+    <div class="option-header">
+      <h2>方案 A：右侧滑出侧边栏</h2>
+      <span class="tag recommended">推荐</span>
+    </div>
+    <div class="mockup-area">
+      <div class="desktop-bg">
+        <div class="desktop-icon"><span class="icon">📁</span>文档</div>
+        <div class="desktop-icon"><span class="icon">🌐</span>浏览器</div>
+        <div class="desktop-icon"><span class="icon">💻</span>VS Code</div>
+        <div class="desktop-icon"><span class="icon">📝</span>笔记</div>
+      </div>
+
+      <!-- Chat window (target app) -->
+      <div class="chat-window">
+        <div class="chat-titlebar">💬 微信聊天</div>
+        <div class="chat-messages">
+          <div class="chat-bubble">请把那个方案文档发我一下</div>
+          <div class="chat-bubble sent">好的，稍等</div>
+          <div class="chat-bubble">还有上次的报价截图</div>
+          <div class="chat-bubble sent">正在找...</div>
+        </div>
+        <div class="chat-input">输入消息... ⏎</div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar-right">
+        <div class="sidebar-handle"></div>
+        <div class="sidebar-header">
+          <span>暂存架</span>
+          <span class="count">5/20</span>
+        </div>
+        <div class="sidebar-grid">
+          <div class="sidebar-card image-card">
+            <span class="card-icon">🖼</span>
+            <span>截图</span>
+          </div>
+          <div class="sidebar-card">
+            <span class="card-icon">📄</span>
+            <span>方案.pdf</span>
+          </div>
+          <div class="sidebar-card">
+            <span class="card-icon">📊</span>
+            <span>报价.xlsx</span>
+          </div>
+          <div class="sidebar-card">
+            <span class="card-icon">📝</span>
+            <span>地址文本</span>
+          </div>
+          <div class="sidebar-card">
+            <span class="card-icon">🔗</span>
+            <span>链接</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drag arrow -->
+      <div class="drag-arrow" style="right: 148px; top: 160px;">← 拖出</div>
+
+      <!-- Floating ball -->
+      <div class="floating-ball" style="left: 170px; top: 310px;">📋</div>
+
+      <div class="taskbar">
+        <div class="taskbar-item active">📋</div>
+        <div class="taskbar-item">🌐</div>
+        <div class="taskbar-item">💬</div>
+        <div class="taskbar-item">📁</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <h3>交互方式</h3>
+      <div class="pros-cons">
+        <div class="pros">
+          <div class="pro">贴近手机中转站体验</div>
+          <div class="pro">侧边栏和目标应用并排显示</div>
+          <div class="pro">可直接拖拽到目标窗口</div>
+          <div class="pro">不遮挡主面板</div>
+          <div class="pro">快捷键一键收起/展开</div>
+        </div>
+        <div class="cons">
+          <div class="con">占屏幕右侧空间</div>
+          <div class="con">需要新增独立窗口管理</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Copilot style -->
+  <div class="option">
+    <div class="option-header">
+      <h2>方案 B：Windows Copilot 风格</h2>
+      <span class="tag alternative">备选</span>
+    </div>
+    <div class="mockup-area">
+      <div class="desktop-bg">
+        <div class="desktop-icon"><span class="icon">📁</span>文档</div>
+        <div class="desktop-icon"><span class="icon">🌐</span>浏览器</div>
+        <div class="desktop-icon"><span class="icon">💻</span>VS Code</div>
+        <div class="desktop-icon"><span class="icon">📝</span>笔记</div>
+      </div>
+
+      <!-- Chat window (pushed left) -->
+      <div class="chat-window" style="width: 200px;">
+        <div class="chat-titlebar">💬 微信聊天</div>
+        <div class="chat-messages">
+          <div class="chat-bubble">请把那个方案文档发我一下</div>
+          <div class="chat-bubble sent">好的，稍等</div>
+          <div class="chat-bubble">还有上次的报价截图</div>
+          <div class="chat-bubble sent">正在找...</div>
+        </div>
+        <div class="chat-input">输入消息... ⏎</div>
+      </div>
+
+      <!-- Copilot-style sidebar -->
+      <div class="copilot-sidebar">
+        <div class="copilot-header">📥 暂存架 · 5项</div>
+        <div class="copilot-grid">
+          <div class="sidebar-card image-card" style="width:100%;height:60px;">
+            <span class="card-icon">🖼</span>
+            <span>截图</span>
+          </div>
+          <div class="sidebar-card" style="width:100%;height:60px;">
+            <span class="card-icon">📄</span>
+            <span>方案.pdf</span>
+          </div>
+          <div class="sidebar-card" style="width:100%;height:60px;">
+            <span class="card-icon">📊</span>
+            <span>报价.xlsx</span>
+          </div>
+          <div class="sidebar-card" style="width:100%;height:60px;">
+            <span class="card-icon">📝</span>
+            <span>地址文本</span>
+          </div>
+          <div class="sidebar-card" style="width:100%;height:60px;">
+            <span class="card-icon">🔗</span>
+            <span>链接</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating ball -->
+      <div class="floating-ball" style="left: 140px; top: 310px;">📋</div>
+
+      <div class="taskbar">
+        <div class="taskbar-item active">📋</div>
+        <div class="taskbar-item">🌐</div>
+        <div class="taskbar-item">💬</div>
+        <div class="taskbar-item">📁</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <h3>交互方式</h3>
+      <div class="pros-cons">
+        <div class="pros">
+          <div class="pro">吸附屏幕边缘，系统级体验</div>
+          <div class="pro">卡片更大，预览更清晰</div>
+          <div class="pro">符合 Windows 11 用户习惯</div>
+        </div>
+        <div class="cons">
+          <div class="con">推开其他窗口，改变布局</div>
+          <div class="con">实现复杂度高</div>
+          <div class="con">非全屏应用下效果不佳</div>
+          <div class="con">屏幕小时空间紧张</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Embedded + hotkey -->
+  <div class="option">
+    <div class="option-header">
+      <h2>方案 C：主面板内 + 快捷呼出</h2>
+      <span class="tag simple">最简</span>
+    </div>
+    <div class="mockup-area">
+      <div class="desktop-bg">
+        <div class="desktop-icon"><span class="icon">📁</span>文档</div>
+        <div class="desktop-icon"><span class="icon">🌐</span>浏览器</div>
+        <div class="desktop-icon"><span class="icon">💻</span>VS Code</div>
+        <div class="desktop-icon"><span class="icon">📝</span>笔记</div>
+      </div>
+
+      <!-- Main panel with embedded staging -->
+      <div class="main-panel-embedded">
+        <div class="panel-staging-area">
+          <div class="panel-staging-title">暂存架 <span style="color:#4a5568">5/20</span></div>
+          <div class="panel-staging-grid">
+            <div class="panel-staging-card">🖼</div>
+            <div class="panel-staging-card">📄</div>
+            <div class="panel-staging-card">📊</div>
+            <div class="panel-staging-card">📝</div>
+            <div class="panel-staging-card">🔗</div>
+            <div class="panel-staging-card" style="border:1px dashed #2a3a4a;color:#2a3a4a;">+</div>
+          </div>
+        </div>
+        <div class="panel-history-area">
+          <div style="font-size:10px;color:#71808f;margin-bottom:6px;">历史记录</div>
+          <div class="panel-history-item"><span class="item-icon">📋</span> 这是一段复制的文本内容...</div>
+          <div class="panel-history-item"><span class="item-icon">📋</span> 另一段历史记录...</div>
+          <div class="panel-history-item"><span class="item-icon">📋</span> 第三条记录...</div>
+          <div class="panel-history-item"><span class="item-icon">📋</span> 更多内容...</div>
+        </div>
+      </div>
+
+      <!-- Overlay showing the problem -->
+      <div style="position:absolute;top:60px;left:30px;background:rgba(240,100,100,0.15);border:1px dashed #f06464;border-radius:8px;padding:8px 12px;font-size:10px;color:#f06464;">
+        ⚠ 被主面板遮挡，<br>无法同时操作
+      </div>
+
+      <!-- Floating ball -->
+      <div class="floating-ball" style="left: 130px; top: 310px;">📋</div>
+
+      <div class="taskbar">
+        <div class="taskbar-item active">📋</div>
+        <div class="taskbar-item">🌐</div>
+        <div class="taskbar-item">💬</div>
+        <div class="taskbar-item">📁</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <h3>交互方式</h3>
+      <div class="pros-cons">
+        <div class="pros">
+          <div class="pro">实现最简单，改动最小</div>
+          <div class="pro">一个窗口管理所有功能</div>
+          <div class="pro">快捷键快速切换视图</div>
+        </div>
+        <div class="cons">
+          <div class="con">面板遮挡目标应用</div>
+          <div class="con">无法边看暂存架边操作</div>
+          <div class="con">不符合手机中转站范式</div>
+          <div class="con">拖拽到外部应用困难</div>
+          <div class="con">暂存架卡片太小，预览弱</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Summary -->
+<div style="max-width:1400px;margin:40px auto 0;padding:24px;background:#10161c;border-radius:14px;border:1px solid #1a2230;">
+  <h2 style="font-size:16px;color:#f0f5f2;margin-bottom:16px;">方案对比总结</h2>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <thead>
+      <tr style="border-bottom:1px solid #1a2230;">
+        <th style="text-align:left;padding:8px 12px;color:#71808f;font-weight:500;">维度</th>
+        <th style="text-align:center;padding:8px 12px;color:#7CE0C3;">A 右侧侧边栏</th>
+        <th style="text-align:center;padding:8px 12px;color:#66b8c7;">B Copilot 风格</th>
+        <th style="text-align:center;padding:8px 12px;color:#f2b84b;">C 主面板内</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #141c24;">
+        <td style="padding:8px 12px;color:#a8b3bd;">贴合手机中转站</td>
+        <td style="text-align:center;padding:8px;color:#7CE0C3;">★★★★★</td>
+        <td style="text-align:center;padding:8px;color:#66b8c7;">★★★★</td>
+        <td style="text-align:center;padding:8px;color:#f2b84b;">★★</td>
+      </tr>
+      <tr style="border-bottom:1px solid #141c24;">
+        <td style="padding:8px 12px;color:#a8b3bd;">拖拽到目标应用</td>
+        <td style="text-align:center;padding:8px;color:#7CE0C3;">★★★★★</td>
+        <td style="text-align:center;padding:8px;color:#66b8c7;">★★★★</td>
+        <td style="text-align:center;padding:8px;color:#f2b84b;">★★</td>
+      </tr>
+      <tr style="border-bottom:1px solid #141c24;">
+        <td style="padding:8px 12px;color:#a8b3bd;">不遮挡目标应用</td>
+        <td style="text-align:center;padding:8px;color:#7CE0C3;">★★★★</td>
+        <td style="text-align:center;padding:8px;color:#66b8c7;">★★★</td>
+        <td style="text-align:center;padding:8px;color:#f2b84b;">★</td>
+      </tr>
+      <tr style="border-bottom:1px solid #141c24;">
+        <td style="padding:8px 12px;color:#a8b3bd;">实现复杂度</td>
+        <td style="text-align:center;padding:8px;color:#7CE0C3;">中等</td>
+        <td style="text-align:center;padding:8px;color:#66b8c7;">较高</td>
+        <td style="text-align:center;padding:8px;color:#f2b84b;">简单</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;color:#a8b3bd;">推荐度</td>
+        <td style="text-align:center;padding:8px;color:#7CE0C3;font-weight:700;">✓ 推荐</td>
+        <td style="text-align:center;padding:8px;color:#66b8c7;">备选</td>
+        <td style="text-align:center;padding:8px;color:#f2b84b;">过渡方案</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
