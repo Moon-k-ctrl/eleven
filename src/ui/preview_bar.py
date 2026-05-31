@@ -16,7 +16,7 @@ from PyQt6.QtCore import (
     pyqtProperty, QParallelAnimationGroup,
 )
 from PyQt6.QtGui import (
-    QBrush, QColor, QDrag, QLinearGradient,
+    QBrush, QColor, QCursor, QDrag, QLinearGradient,
     QPainter, QPainterPath, QPen, QPixmap, QRadialGradient,
 )
 from PyQt6.QtWidgets import QApplication, QMenu, QWidget
@@ -161,21 +161,32 @@ class PreviewBar(QWidget):
         self.setAcceptDrops(True)
         self._update_geometry_for_ball()
 
+    @staticmethod
+    def _get_screen() -> 'QScreen | None':
+        """Get the screen at current mouse position, fallback to primary."""
+        cursor_pos = QCursor.pos()
+        screen = QApplication.screenAt(cursor_pos)
+        return screen or QApplication.primaryScreen()
+
     def _update_geometry_for_ball(self):
-        screen = QApplication.primaryScreen()
-        if not screen:
-            return
-        geo = screen.availableGeometry()
-        # 尝试加载保存的位置
         saved = self._load_position()
         if saved:
             x, y = saved
-            # 确保在屏幕范围内
+            # Find the screen that contains this position
+            screen = QApplication.screenAt(QPoint(x, y)) or self._get_screen()
+            if not screen:
+                return
+            geo = screen.availableGeometry()
+            # Ensure within screen bounds
             if x < geo.left() or x > geo.right() - BALL_WINDOW_W:
                 x = geo.right() - BALL_WINDOW_W - 20
             if y < geo.top() or y > geo.bottom() - BALL_WINDOW_H:
                 y = geo.bottom() - BALL_WINDOW_H - 20
         else:
+            screen = self._get_screen()
+            if not screen:
+                return
+            geo = screen.availableGeometry()
             x = geo.right() - BALL_WINDOW_W - 20
             y = geo.bottom() - BALL_WINDOW_H - 20
         self.setGeometry(x, y, BALL_WINDOW_W, BALL_WINDOW_H)
@@ -299,7 +310,7 @@ class PreviewBar(QWidget):
         target_h = VLIST_PADDING + visible * VLIST_ITEM_H + VLIST_PADDING + ACTION_AREA_W
         target_h = max(VLIST_MIN_H, min(VLIST_MAX_H, target_h))
 
-        screen = QApplication.primaryScreen()
+        screen = self._get_screen()
         if not screen:
             self._is_animating = False
             return
@@ -344,7 +355,7 @@ class PreviewBar(QWidget):
         if self._saved_ball_pos:
             target_x, target_y = self._saved_ball_pos
         else:
-            screen = QApplication.primaryScreen()
+            screen = self._get_screen()
             if not screen:
                 self._is_animating = False
                 return
@@ -394,7 +405,7 @@ class PreviewBar(QWidget):
         target_h = STAGING_HEADER_H + rows * (STAGING_CARD_SIZE + STAGING_GAP) + STAGING_FOOTER_H + STAGING_PADDING
         target_h = max(STAGING_HEADER_H + STAGING_CARD_SIZE + STAGING_FOOTER_H + STAGING_PADDING * 2, target_h)
 
-        screen = QApplication.primaryScreen()
+        screen = self._get_screen()
         if not screen:
             self._is_animating = False
             return
@@ -1311,7 +1322,8 @@ class PreviewBar(QWidget):
             self.remove_item_requested.emit(staging_id)
 
     def _apply_edge_snap(self, pos: QPoint) -> QPoint:
-        screen = QApplication.primaryScreen()
+        """Snap ball to screen edges. Uses screen at target position for multi-monitor."""
+        screen = QApplication.screenAt(pos) or self._get_screen()
         if not screen:
             return pos
         geo = screen.availableGeometry()

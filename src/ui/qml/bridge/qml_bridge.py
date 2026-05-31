@@ -195,8 +195,9 @@ class QmlBridge(QObject):
     def _center_on_screen(self) -> None:
         if not self._root:
             return
-        from PyQt6.QtGui import QGuiApplication
-        screen = QGuiApplication.primaryScreen()
+        from PyQt6.QtGui import QGuiApplication, QCursor
+        cursor_pos = QCursor.pos()
+        screen = QGuiApplication.screenAt(cursor_pos) or QGuiApplication.primaryScreen()
         if screen:
             geo = screen.availableGeometry()
             w = self._root.property("width") or 380
