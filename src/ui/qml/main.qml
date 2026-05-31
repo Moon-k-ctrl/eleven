@@ -124,6 +124,19 @@ Window {
         function onStagingChanged() {
             // Staging shelf auto-updates via model
         }
+        function onToastRequested(message, toastType, showUndo) {
+            toast.show(message, toastType, showUndo)
+        }
+    }
+
+    // Toast notification (positioned at bottom of panel)
+    Toast {
+        id: toast
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.spacingMD + 4
+        anchors.horizontalCenter: parent.horizontalCenter
+        z: 100
+        onUndoClicked: bridge.undoDelete()
     }
 
     // Keyboard shortcuts

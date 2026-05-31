@@ -26,6 +26,7 @@ class QmlBridge(QObject):
     exportRequested = pyqtSignal()
     errorOccurred = pyqtSignal(str)
     stagingChanged = pyqtSignal()
+    toastRequested = pyqtSignal(str, str, bool)  # message, type, showUndo
 
     # ── Property change signals (required by pyqtProperty) ──
     _statusChanged = pyqtSignal()
@@ -57,6 +58,9 @@ class QmlBridge(QObject):
         # Multi-select state
         self._multi_select_mode = False
         self._selected_item_ids: set[int] = set()
+
+        # Undo delete buffer
+        self._last_deleted_id: int | None = None
 
         # Cached counts
         self._count = 0
@@ -228,6 +232,7 @@ class QmlBridge(QObject):
     def copyItem(self, item_id: int) -> None:
         try:
             self._api.copy_item(item_id)
+            self.toastRequested.emit("已复制到剪贴板", "success", False)
         except Exception as e:
             logger.error(f"copyItem({item_id}) failed: {e}")
 
@@ -235,6 +240,8 @@ class QmlBridge(QObject):
     def deleteItem(self, item_id: int) -> None:
         try:
             self._api.delete_item(item_id)
+            self._last_deleted_id = item_id
+            self.toastRequested.emit("已移到回收站", "info", True)
         except Exception as e:
             logger.error(f"deleteItem({item_id}) failed: {e}")
 
@@ -361,6 +368,7 @@ class QmlBridge(QObject):
     def batchDelete(self, item_ids: list) -> None:
         try:
             self._api.batch_delete([int(i) for i in item_ids])
+            self.toastRequested.emit(f"已删除 {len(item_ids)} 条记录", "info", False)
         except Exception as e:
             logger.error(f"batchDelete failed: {e}")
 
@@ -515,6 +523,7 @@ class QmlBridge(QObject):
         try:
             self._api.add_to_staging(item_id)
             self.refreshStaging()
+            self.toastRequested.emit("已发送到暂存架", "success", False)
         except Exception as e:
             logger.error(f"addToStaging({item_id}) failed: {e}")
             self.errorOccurred.emit(str(e))
@@ -588,6 +597,20 @@ class QmlBridge(QObject):
         if self._root:
             current = self._root.property("showPhrases")
             self._root.setProperty("showPhrases", not current)
+
+    # ── Undo delete ──
+
+    @pyqtSlot()
+    def undoDelete(self) -> None:
+        """Restore the last soft-deleted item."""
+        if self._last_deleted_id:
+            try:
+                self._api.restore_from_trash(self._last_deleted_id)
+                self.toastRequested.emit("已恢复", "success", False)
+                self._last_deleted_id = None
+                self.refreshList()
+            except Exception as e:
+                logger.error(f"undoDelete failed: {e}")
 
     # ── Trash (回收站) ──
 

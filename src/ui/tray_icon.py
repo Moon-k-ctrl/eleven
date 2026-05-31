@@ -133,22 +133,54 @@ class TrayIcon(QSystemTrayIcon):
         return QIcon(pixmap)
 
     def _setup_menu(self) -> None:
-        """Create context menu."""
+        """Create context menu — ink-wash theme."""
         menu = QMenu()
+        menu.setStyleSheet("""
+            QMenu {
+                background: #10161C;
+                border: 1px solid #29E1EEE7;
+                border-radius: 8px;
+                padding: 4px;
+                font-family: "Microsoft YaHei";
+                font-size: 13px;
+            }
+            QMenu::item {
+                padding: 6px 24px 6px 12px;
+                border-radius: 4px;
+                color: #A8B3BD;
+            }
+            QMenu::item:selected {
+                background: rgba(124, 224, 195, 0.1);
+                color: #F0F5F2;
+            }
+            QMenu::item:checked {
+                color: #7CE0C3;
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #14E1EEE7;
+                margin: 4px 8px;
+            }
+            QMenu::indicator {
+                width: 14px;
+                height: 14px;
+                margin-left: 4px;
+            }
+        """)
 
-        show_action = QAction("显示面板", menu)
+        show_action = QAction("📋  显示面板", menu)
         show_action.triggered.connect(self.toggle_panel.emit)
         menu.addAction(show_action)
 
-        detail_action = QAction("打开详情面板", menu)
+        detail_action = QAction("📝  打开详情面板", menu)
         detail_action.triggered.connect(self.toggle_panel.emit)
         menu.addAction(detail_action)
 
-        ball_action = QAction("显示/隐藏悬浮球", menu)
+        ball_action = QAction("📦  显示/隐藏悬浮球", menu)
         ball_action.triggered.connect(self.toggle_ball.emit)
         menu.addAction(ball_action)
 
-        self._monitor_action = QAction("暂停剪贴板监听", menu)
+        self._monitor_action = QAction("⏸  暂停剪贴板监听", menu)
         self._monitor_action.setCheckable(True)
         self._monitor_action.setChecked(not self._config.clipboard_enabled)
         self._monitor_action.triggered.connect(self._toggle_monitoring)
@@ -157,7 +189,7 @@ class TrayIcon(QSystemTrayIcon):
         menu.addSeparator()
 
         # 数据管理子菜单
-        data_menu = menu.addMenu("数据管理")
+        data_menu = menu.addMenu("📊  数据管理")
 
         export_json_action = QAction("导出 JSON", data_menu)
         export_json_action.triggered.connect(self.export_json.emit)
@@ -180,7 +212,7 @@ class TrayIcon(QSystemTrayIcon):
         menu.addSeparator()
 
         # 存储模式子菜单
-        storage_menu = menu.addMenu("存储模式")
+        storage_menu = menu.addMenu("💾  存储模式")
 
         self._volatile_action = QAction("[V] 临时模式", storage_menu)
         self._volatile_action.setCheckable(True)
@@ -197,7 +229,7 @@ class TrayIcon(QSystemTrayIcon):
         menu.addSeparator()
 
         # 开机自启开关
-        self._autostart_action = QAction("开机自启", menu)
+        self._autostart_action = QAction("🔄  开机自启", menu)
         self._autostart_action.setCheckable(True)
         self._autostart_action.setChecked(is_autostart_enabled())
         self._autostart_action.triggered.connect(self._toggle_autostart)
@@ -205,7 +237,7 @@ class TrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
 
-        quit_action = QAction("退出", menu)
+        quit_action = QAction("⏻  退出", menu)
         quit_action.triggered.connect(self.quit_app.emit)
         menu.addAction(quit_action)
 
